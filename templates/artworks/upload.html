@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload — Atelier{% endblock %}
+
+{% block content %}
+    <h1>Upload your work</h1>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <fieldset>
+            <legend>The work</legend>
+            {{ artwork_form.as_p }}
+        </fieldset>
+
+        <fieldset>
+            <legend>What feedback do you want?</legend>
+            {{ request_form.as_p }}
+        </fieldset>
+
+        <button type="submit">Post for critique</button>
+    </form>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ artwork.title }} — Atelier{% endblock %}
+
+{% block content %}
+    <article>
+        <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}" style="max-width: 600px;">
+
+        <h1>{{ artwork.title }}</h1>
+        <p>by {{ artwork.user.username }} · {{ artwork.medium }}</p>
+
+        {% if artwork.description %}
+            <p>{{ artwork.description }}</p>
+        {% endif %}
+
+        {% if artwork.tags.all %}
+            <p>
+                {% for tag in artwork.tags.all %}
+                    <span>{{ tag.name }}</span>
+                {% endfor %}
+            </p>
+        {% endif %}
+
+        <section>
+            <h2>Feedback requested on</h2>
+            <ul>
+                {% for area in artwork.critique_request.focus_areas %}
+                    <li>{{ area }}</li>
+                {% endfor %}
+            </ul>
+
+            {% if artwork.critique_request.artist_note %}
+                <p>{{ artwork.critique_request.artist_note }}</p>
+            {% endif %}
+        </section>
+    </article>
+{% endblock %}
