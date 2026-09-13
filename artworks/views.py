@@ -1,8 +1,45 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import ArtworkForm, CritiqueRequestForm
-from .models import Artwork
+from .models import Artwork, Tag
+from core.constants import FOCUS_AREAS
 
+def browse(request):
+    # Prevents n+1 query problem. 
+    # Optimizes database queries by fetching related user and tags in a single query.
+    artworks = Artwork.objects.select_related('user').prefetch_related('tags')
+
+    # Reading query parameters from the request to filter artworks based on medium, tag, and critique status.
+    medium = request.GET.get('medium', '').strip()
+    tag_id = request.GET.get('tag', '').strip()
+    needs_critique = request.GET.get('needs_critique')
+
+    # Conditionally filter artworks based on the provided query parameters.
+    if medium:
+        # Case insensitive filtering for medium.
+        artworks = artworks.filter(medium__iexact=medium)
+
+    if tag_id.isdigit():
+        # Gaurds against invalid tag IDs by checking if it is a digit before filtering.
+        artworks = artworks.filter(tags__id=int(tag_id))
+
+    if needs_critique:
+        artworks = artworks.filter(critique_status='open')
+
+    mediums = (
+        Artwork.objects.values_list('medium', flat=True)
+        .distinct()
+        .order_by('medium')
+    )
+
+    return render(request, 'artworks/browse.html', {
+        'artworks': artworks,
+        'tags': Tag.objects.all().order_by('category', 'name'),
+        'mediums': mediums,
+        'selected_medium': medium,
+        'selected_tag': tag_id,
+        'needs_critique': needs_critique,
+    })
 
 @login_required
 def upload_artwork(request):

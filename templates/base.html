@@ -8,6 +8,7 @@
 <body>
     <nav>
         <a href="{% url 'home' %}">Atelier</a>
+        <a href="{% url 'browse' %}">Browse</a>
         {% if user.is_authenticated %}
             <a href="{% url 'upload_artwork' %}">Upload</a>
             <span>{{ user.username }}</span>

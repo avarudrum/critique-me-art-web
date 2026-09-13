@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Browse — Atelier{% endblock %}
+
+{% block content %}
+    <h1>Browse work</h1>
+
+    <form method="get">
+        <label for="medium">Medium</label>
+        <select name="medium" id="medium">
+            <option value="">All</option>
+            {% for m in mediums %}
+                <option value="{{ m }}" {% if m == selected_medium %}selected{% endif %}>
+                    {{ m }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label for="tag">Tag</label>
+        <select name="tag" id="tag">
+            <option value="">All</option>
+            {% for tag in tags %}
+                <option value="{{ tag.id }}" {% if tag.id|stringformat:"s" == selected_tag %}selected{% endif %}>
+                    {{ tag.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label>
+            <input type="checkbox" name="needs_critique" value="1"
+                   {% if needs_critique %}checked{% endif %}>
+            Needs critique
+        </label>
+
+        <button type="submit">Filter</button>
+        <a href="{% url 'browse' %}">Clear</a>
+    </form>
+
+    <div>
+        {% for artwork in artworks %}
+            <article>
+                <a href="{% url 'artwork_detail' artwork.pk %}">
+                    <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}"
+                         style="max-width: 240px;">
+                </a>
+                <h2>
+                    <a href="{% url 'artwork_detail' artwork.pk %}">{{ artwork.title }}</a>
+                </h2>
+                <p>{{ artwork.user.username }} · {{ artwork.medium }}</p>
+                {% if artwork.critique_request.focus_areas %}
+                    <p>Wants feedback on:
+                        {{ artwork.critique_request.focus_areas|join:", " }}
+                    </p>
+                {% endif %}
+            </article>
+        {% empty %}
+            <p>No work matches those filters.</p>
+        {% endfor %}
+    </div>
+{% endblock %}
