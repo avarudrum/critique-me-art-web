@@ -33,5 +33,26 @@
                 <p>{{ artwork.critique_request.artist_note }}</p>
             {% endif %}
         </section>
+        <section>
+            <h2>Critiques ({{ artwork.critiques.count }})</h2>
+
+            {% if user.is_authenticated and user != artwork.user and artwork.critique_request %}                <a href="{% url 'create_critique' artwork.pk %}">Leave a critique</a>
+            {% endif %}
+
+            {% for critique in artwork.critiques.all %}
+                <article>
+                    <h3>{{ critique.user.username }} · {{ critique.created_at|date:"j M Y" }}</h3>
+                    {% for section in critique.sections.all %}
+                        <div>
+                            <strong>{{ section.get_category_display }}</strong>
+                            <em>{{ section.get_section_type_display }}</em>
+                            <p>{{ section.body }}</p>
+                        </div>
+                    {% endfor %}
+                </article>
+            {% empty %}
+                <p>No critiques yet.</p>
+            {% endfor %}
+        </section>
     </article>
 {% endblock %}

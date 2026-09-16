@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'cloudinary',
     'accounts',
     'artworks',
+    'critiques',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'

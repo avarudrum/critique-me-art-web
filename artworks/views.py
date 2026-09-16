@@ -68,8 +68,9 @@ def upload_artwork(request):
         'request_form': request_form,
     })
 
-
 def artwork_detail(request, pk):
-    # Retrieve the artwork by its primary key or return a 404 error if not found.
-    artwork = get_object_or_404(Artwork, pk=pk)
+    artwork = get_object_or_404(
+        Artwork.objects.prefetch_related('critiques__sections', 'tags'),
+        pk=pk,
+    )
     return render(request, 'artworks/detail.html', {'artwork': artwork})

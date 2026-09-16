@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Critique {{ artwork.title }} — Atelier{% endblock %}
+
+{% block content %}
+    <h1>Critique: {{ artwork.title }}</h1>
+    <p>by {{ artwork.user.username }} · {{ artwork.medium }}</p>
+
+    <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}" style="max-width: 500px;">
+
+    {% if artwork.critique_request.artist_note %}
+        <blockquote>
+            <strong>The artist says:</strong>
+            {{ artwork.critique_request.artist_note }}
+        </blockquote>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+
+        {% for form in formset %}
+            <fieldset>
+                <legend>{{ form.category.value|title }}</legend>
+                {{ form.category }}
+                {{ form.section_type.label_tag }}
+                {{ form.section_type }}
+                {{ form.body.label_tag }}
+                {{ form.body }}
+                {{ form.body.errors }}
+            </fieldset>
+        {% endfor %}
+
+        <button type="submit">Submit critique</button>
+    </form>
+{% endblock %}
