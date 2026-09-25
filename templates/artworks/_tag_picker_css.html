@@ -1,0 +1,68 @@
+{% comment %}
+Layout for the grouped tag checkboxes, shared by upload.html and edit.html.
+
+Scoped to the widget's auto-generated id rather than a class: Django's
+ChoiceWidget copies a widget's `class` attribute onto every <input> as well as
+the wrapper, so a class selector would match both.
+
+Temporary home -- move this into a real stylesheet when static files get set up.
+{% endcomment %}
+<style>
+    #id_tags {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 0.4rem;
+    }
+
+    /* one category group: Medium / Technique / Subject */
+    #id_tags > div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    /* the category heading, given its own full-width row inside the group */
+    #id_tags > div > label {
+        flex: 0 0 100%;
+        margin: 0;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #666;
+    }
+
+    /* one tag, drawn as a chip; the checkbox stays visible inside it */
+    #id_tags > div > div > label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.65rem;
+        border: 1px solid #ccc;
+        border-radius: 999px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        cursor: pointer;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    #id_tags > div > div > label:hover {
+        border-color: #888;
+        background: #f4f4f4;
+    }
+
+    /* :has() lets each chip react to its own checkbox with no JavaScript.
+       Without :has() support the chips simply stay unfilled but still work. */
+    #id_tags > div > div:has(input:checked) > label {
+        border-color: #2b2b2b;
+        background: #2b2b2b;
+        color: #fff;
+    }
+
+    #id_tags input:focus-visible {
+        outline: 2px solid #4a7dff;
+        outline-offset: 2px;
+    }
+</style>

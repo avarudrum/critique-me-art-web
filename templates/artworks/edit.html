@@ -2,6 +2,8 @@
 
 {% block title %}Edit {{ artwork.title }} — Atelier{% endblock %}
 
+{% block extra_head %}{% include 'artworks/_tag_picker_css.html' %}{% endblock %}
+
 {% block content %}
     <h1>Edit artwork details</h1>
 

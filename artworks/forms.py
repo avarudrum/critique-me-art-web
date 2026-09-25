@@ -2,10 +2,43 @@ from django import forms
 from django.template.defaultfilters import filesizeformat
 from PIL import Image, UnidentifiedImageError
 from core.constants import FOCUS_AREAS, MAX_IMAGE_BYTES
-from .models import Artwork, CritiqueRequest
+from .models import Artwork, CritiqueRequest, Tag
 
 
-class ArtworkForm(forms.ModelForm):
+def grouped_tag_choices():
+    """Tag choices bucketed by category, as [(group label, [(pk, name), ...]), ...].
+
+    Django's ChoiceWidget understands this nested shape and renders each bucket
+    as its own labelled group, which turns one long flat column of checkboxes
+    into three short scannable ones.
+    """
+    by_category = {}
+    for tag in Tag.objects.order_by('name'):
+        by_category.setdefault(tag.category, []).append((tag.pk, tag.name))
+
+    # Follow the order declared on Tag.CATEGORY_CHOICES rather than alphabetical,
+    # and skip any category that has no tags yet.
+    return [
+        (label, by_category[key])
+        for key, label in Tag.CATEGORY_CHOICES
+        if key in by_category
+    ]
+
+
+class GroupedTagsMixin:
+    """Groups the `tags` checkboxes by category.
+
+    Set in __init__ rather than on the class so the tag list is read fresh each
+    request. This only changes rendering -- ModelMultipleChoiceField still
+    validates submitted ids against its queryset, not against these choices.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['tags'].choices = grouped_tag_choices()
+
+
+class ArtworkForm(GroupedTagsMixin, forms.ModelForm):
     class Meta:
         model = Artwork
         fields = ('title', 'description', 'image', 'medium', 'tags')
@@ -44,7 +77,7 @@ class ArtworkForm(forms.ModelForm):
         return image
 
 
-class ArtworkEditForm(forms.ModelForm):
+class ArtworkEditForm(GroupedTagsMixin, forms.ModelForm):
     """Descriptive fields only.
 
     The image and the critique request's focus areas are deliberately left out:
