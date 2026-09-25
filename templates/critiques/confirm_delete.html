@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete your critique — Atelier{% endblock %}
+
+{% block content %}
+    <h1>Delete this critique?</h1>
+    <p>Your critique on <a href="{% url 'artwork_detail' artwork.pk %}">{{ artwork.title }}</a>
+       by {{ artwork.user.username }} will be removed. This can't be undone.</p>
+
+    {% for section in critique.sections.all %}
+        <div>
+            <strong>{{ section.get_category_display }}</strong>
+            <p>{{ section.body|linebreaksbr }}</p>
+        </div>
+    {% endfor %}
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Yes, delete it</button>
+        <a href="{% url 'artwork_detail' artwork.pk %}">Cancel</a>
+    </form>
+{% endblock %}

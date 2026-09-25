@@ -9,3 +9,7 @@ FOCUS_AREAS = [
 ]
 
 FOCUS_AREA_KEYS = [key for key, _ in FOCUS_AREAS]
+
+# Cloudinary's free plan rejects uploads over 10 MB, so catch it in the form
+# instead of letting the API call fail.
+MAX_IMAGE_BYTES = 10 * 1024 * 1024

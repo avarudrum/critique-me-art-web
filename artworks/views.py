@@ -1,6 +1,7 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import ArtworkForm, CritiqueRequestForm
+from .forms import ArtworkForm, ArtworkEditForm, CritiqueRequestForm
 from .models import Artwork, Tag
 from core.constants import FOCUS_AREAS
 
@@ -73,4 +74,59 @@ def artwork_detail(request, pk):
         Artwork.objects.prefetch_related('critiques__sections', 'tags'),
         pk=pk,
     )
-    return render(request, 'artworks/detail.html', {'artwork': artwork})
+    # Lets the template hide the "Leave a critique" link instead of offering a
+    # link that just redirects back. The view is still the rule that enforces it.
+    already_critiqued = (
+        request.user.is_authenticated
+        and artwork.critiques.filter(user=request.user).exists()
+    )
+
+    return render(request, 'artworks/detail.html', {
+        'artwork': artwork,
+        'already_critiqued': already_critiqued,
+    })
+
+
+@login_required
+def edit_artwork(request, pk):
+    artwork = get_object_or_404(Artwork, pk=pk)
+
+    if artwork.user != request.user:
+        messages.error(request, "You can only edit your own artwork.")
+        return redirect('artwork_detail', pk=artwork.pk)
+
+    if request.method == 'POST':
+        form = ArtworkEditForm(request.POST, instance=artwork)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Your artwork details have been updated.")
+            return redirect('artwork_detail', pk=artwork.pk)
+    else:
+        form = ArtworkEditForm(instance=artwork)
+
+    return render(request, 'artworks/edit.html', {
+        'form': form,
+        'artwork': artwork,
+    })
+
+
+@login_required
+def delete_artwork(request, pk):
+    artwork = get_object_or_404(Artwork, pk=pk)
+
+    if artwork.user != request.user:
+        messages.error(request, "You can only delete your own artwork.")
+        return redirect('artwork_detail', pk=artwork.pk)
+
+    # POST only, same reason as deleting a critique: a GET that destroys data
+    # would fire on any crawler or link preview.
+    if request.method == 'POST':
+        title = artwork.title
+        artwork.delete()
+        messages.success(request, f'"{title}" and its critiques have been deleted.')
+        return redirect('browse')
+
+    return render(request, 'artworks/confirm_delete.html', {
+        'artwork': artwork,
+        'critique_count': artwork.critiques.count(),
+    })

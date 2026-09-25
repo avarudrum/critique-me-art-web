@@ -12,6 +12,11 @@ class CritiqueSectionForm(forms.Form):
         }),
     )
 
+    def clean_body(self):
+        # Strip here so a whitespace-only box counts as blank everywhere:
+        # the formset's "at least one area" check and the views both rely on it.
+        return (self.cleaned_data.get('body') or '').strip()
+
 
 class BaseCritiqueSectionFormSet(forms.BaseFormSet):
     def clean(self):

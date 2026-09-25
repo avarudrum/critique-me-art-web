@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit your critique — Atelier{% endblock %}
+
+{% block content %}
+    <h1>Edit your critique</h1>
+    <p>on <a href="{% url 'artwork_detail' artwork.pk %}">{{ artwork.title }}</a>
+       by {{ artwork.user.username }}</p>
+
+    <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}" style="max-width: 500px;">
+
+    {% if artwork.critique_request.artist_note %}
+        <blockquote>
+            <strong>The artist says:</strong>
+            {{ artwork.critique_request.artist_note }}
+        </blockquote>
+    {% endif %}
+
+    <p>Clear a box to drop that area from your critique. Keep at least one.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {{ formset.non_form_errors }}
+
+        {% for form in formset %}
+            <fieldset>
+                <legend>{{ form.category.value|title }}</legend>
+                {{ form.category }}
+                {{ form.body.label_tag }}
+                {{ form.body }}
+                {{ form.body.errors }}
+            </fieldset>
+        {% endfor %}
+
+        <button type="submit">Save changes</button>
+        <a href="{% url 'artwork_detail' artwork.pk %}">Cancel</a>
+    </form>
+{% endblock %}

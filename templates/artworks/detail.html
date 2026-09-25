@@ -13,6 +13,13 @@
             <p>{{ artwork.description }}</p>
         {% endif %}
 
+        {% if user == artwork.user %}
+            <p>
+                <a href="{% url 'edit_artwork' artwork.pk %}">Edit details</a>
+                <a href="{% url 'delete_artwork' artwork.pk %}">Delete</a>
+            </p>
+        {% endif %}
+
         {% if artwork.tags.all %}
             <p>
                 {% for tag in artwork.tags.all %}
@@ -38,7 +45,11 @@
             <h2>Critiques ({{ artwork.critiques.count }})</h2>
 
             {% if user.is_authenticated and user != artwork.user and artwork.critique_request %}
-                <a href="{% url 'create_critique' artwork.pk %}">Leave a critique</a>
+                {% if already_critiqued %}
+                    <p>You've already critiqued this piece.</p>
+                {% else %}
+                    <a href="{% url 'create_critique' artwork.pk %}">Leave a critique</a>
+                {% endif %}
             {% endif %}
 
             {% for critique in artwork.critiques.all %}
@@ -50,6 +61,13 @@
                             <p>{{ section.body|linebreaksbr }}</p>
                         </div>
                     {% endfor %}
+
+                    {% if critique.user == user %}
+                        <p>
+                            <a href="{% url 'edit_critique' critique.pk %}">Edit</a>
+                            <a href="{% url 'delete_critique' critique.pk %}">Delete</a>
+                        </p>
+                    {% endif %}
                 </article>
             {% empty %}
                 <p>No critiques yet.</p>

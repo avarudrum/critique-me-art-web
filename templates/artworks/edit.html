@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit {{ artwork.title }} — Atelier{% endblock %}
+
+{% block content %}
+    <h1>Edit artwork details</h1>
+
+    <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}" style="max-width: 400px;">
+
+    <p>The image and the feedback areas you asked about can't be changed, because
+       existing critiques were written about them.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save changes</button>
+        <a href="{% url 'artwork_detail' artwork.pk %}">Cancel</a>
+    </form>
+{% endblock %}

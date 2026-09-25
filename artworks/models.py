@@ -1,6 +1,13 @@
+import logging
+
+import cloudinary.uploader
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.conf import settings
 from cloudinary.models import CloudinaryField
+
+logger = logging.getLogger(__name__)
 
 # Defining the Tag model to categorize artworks by medium, technique, or subject.
 class Tag(models.Model):
@@ -44,6 +51,25 @@ class Artwork(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# A signal rather than code in the delete view, so this also runs when an
+# Artwork is removed through the admin or cascaded from a deleted user.
+# Note: `manage.py flush` does not fire post_delete, so `seed --flush` still
+# leaves old uploads in the Cloudinary Media Library.
+@receiver(post_delete, sender=Artwork)
+def delete_artwork_image(sender, instance, **kwargs):
+    public_id = getattr(instance.image, 'public_id', None)
+    if not public_id:
+        return
+    try:
+        cloudinary.uploader.destroy(public_id, invalidate=True)
+    except Exception:
+        # Deliberately broad: the database row is already gone, and a network
+        # blip talking to Cloudinary must not surface as a 500 on a delete.
+        logger.warning(
+            "Could not delete Cloudinary asset %s", public_id, exc_info=True
+        )
 
 
 class CritiqueRequest(models.Model):
