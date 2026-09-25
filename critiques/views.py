@@ -30,14 +30,14 @@ def create_critique(request, artwork_pk):
                     user=request.user,
                 )
                 for form in formset:
-                    category = form.cleaned_data['category']
-                    if category not in focus_areas:
+                    category = form.cleaned_data.get('category')
+                    body = form.cleaned_data.get('body')
+                    if category not in focus_areas or not body:
                         continue
                     CritiqueSection.objects.create(
                         critique=critique,
                         category=category,
-                        body=form.cleaned_data['body'],
-                        section_type=form.cleaned_data['section_type'],
+                        body=body,
                     )
             return redirect('artwork_detail', pk=artwork.pk)
     else:

@@ -1,25 +1,31 @@
 from django import forms
-from .models import CritiqueSection
 
 
 class CritiqueSectionForm(forms.Form):
     category = forms.CharField(widget=forms.HiddenInput())
-    section_type = forms.ChoiceField(
-        choices=CritiqueSection.TYPE_CHOICES,
-        widget=forms.RadioSelect,
-        initial='growth',
-        label='This is a',
-    )
     body = forms.CharField(
         label='Your feedback',
+        required=False,
         widget=forms.Textarea(attrs={
-            'rows': 4,
+            'rows': 5,
             'placeholder': 'Describe what you see before you suggest changes.',
         }),
     )
 
 
+class BaseCritiqueSectionFormSet(forms.BaseFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        if not any(form.cleaned_data.get('body') for form in self.forms):
+            raise forms.ValidationError(
+                "Write feedback for at least one area before submitting."
+            )
+
+
 CritiqueSectionFormSet = forms.formset_factory(
     CritiqueSectionForm,
+    formset=BaseCritiqueSectionFormSet,
     extra=0,
 )

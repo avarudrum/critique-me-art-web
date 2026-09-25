@@ -15,16 +15,17 @@
         </blockquote>
     {% endif %}
 
+    <p>Respond to any of the areas the artist asked about. Leave the rest blank.</p>
+
     <form method="post">
         {% csrf_token %}
         {{ formset.management_form }}
+        {{ formset.non_form_errors }}
 
         {% for form in formset %}
             <fieldset>
                 <legend>{{ form.category.value|title }}</legend>
                 {{ form.category }}
-                {{ form.section_type.label_tag }}
-                {{ form.section_type }}
                 {{ form.body.label_tag }}
                 {{ form.body }}
                 {{ form.body.errors }}

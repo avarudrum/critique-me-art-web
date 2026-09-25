@@ -24,10 +24,6 @@ class Critique(models.Model):
 
 
 class CritiqueSection(models.Model):
-    TYPE_CHOICES = [
-        ('strength', 'Strength'),
-        ('growth', 'Area for growth'),
-    ]
     critique = models.ForeignKey(
         Critique,
         on_delete=models.CASCADE,
@@ -35,7 +31,6 @@ class CritiqueSection(models.Model):
     )
     category = models.CharField(max_length=20, choices=FOCUS_AREAS)
     body = models.TextField()
-    section_type = models.CharField(max_length=10, choices=TYPE_CHOICES)
 
     def __str__(self):
-        return f"{self.get_category_display()} — {self.get_section_type_display()}"
+        return f"{self.get_category_display()} — {self.critique}"
