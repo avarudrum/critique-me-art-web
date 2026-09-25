@@ -46,7 +46,6 @@ ARTWORKS = [
     {
         'title': 'Busking',
         'image': 'mix-media_1.jpg',
-        'medium': 'mixed-media',
         'description': 'Acrylic mixed-media portrait, with oil pastel highlights.',
         'tags': ['mixed-media', 'still-life'],
         'focus_areas': ['composition'],
@@ -55,7 +54,6 @@ ARTWORKS = [
     {
         'title': 'all at once',
         'image': 'acrylic1.JPG',
-        'medium': 'acrylic paint',
         'description': 'Portrait study, playing with colour and texture.',
         'tags': ['acrylic paint', 'portrait'],
         'focus_areas': ['color', 'composition'],
@@ -64,7 +62,6 @@ ARTWORKS = [
     {
         'title': 'Funky Colours',
         'image': 'Funky_colours.png',
-        'medium': 'digital',
         'description': 'Digital abstract space.',
         'tags': ['digital', 'linework', 'abstract'],
         'focus_areas': ['technique'],
@@ -73,7 +70,6 @@ ARTWORKS = [
     {
         'title': 'Light and shadow study',
         'image': 'charcoal_still.jpg',
-        'medium': 'charcoal',
         'description': 'From life, studio still-life with graphite and charcoal. Trying to push the contrast.',
         'tags': ['charcoal', 'light and shadow', 'still-life'],
         'focus_areas': ['technique'],
@@ -82,7 +78,6 @@ ARTWORKS = [
     {
         'title': 'Link sketch',
         'image': 'link_sketch.jpeg',
-        'medium': 'graphite',
         'description': 'Graphite sketch of Link from Legend of Zelda.',
         'tags': ['graphite', 'character art', 'sketch'],
         'focus_areas': ['concept'],
@@ -91,7 +86,6 @@ ARTWORKS = [
     {
         'title': 'aging',
         'image': 'oilpastel.jpeg',
-        'medium': 'oil pastel',
         'description': 'Concept oil pastel portrait, playing with texture and mark-making.',
         'tags': ['oil pastel', 'portrait', 'mark-making', 'Impressionism'],
         'focus_areas': ['technique', 'composition'],
@@ -100,7 +94,6 @@ ARTWORKS = [
     {
         'title': 'Reaching out',
         'image': 'charcoal_hand.jpeg',        
-        'medium': 'graphite and charcoal',
         'description': 'Graphite and charcoal technique play. Trying to push the contrast and composition.',
         'tags': ['graphite', 'charcoal', 'still-life'],
         'focus_areas': ['composition', 'concept', 'technique'],
@@ -240,11 +233,12 @@ class Command(BaseCommand):
                 user=artist,
                 title=data['title'],
                 description=data['description'],
-                medium=data['medium'],
                 image=upload_result['public_id'],
             )
             artwork.save()
 
+            # Medium comes from these tags now, so every entry needs at least one
+            # with category 'medium' -- the upload form enforces the same rule.
             artwork.tags.set(tags[name] for name in data['tags'])
 
             CritiqueRequest.objects.create(

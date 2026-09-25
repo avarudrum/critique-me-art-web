@@ -63,6 +63,14 @@ Seeded accounts: gracie_m, haley_s, sana_k, terry_lb. Password: seedpass123
 - **Destructive actions are POST-only.** GET renders a confirmation page. A GET that deletes data fires on crawlers and link previews.
 - **Cloudinary cleanup lives in a `post_delete` signal** on `Artwork`, not in the delete view, so it also runs for admin deletes and for cascades from a deleted user. Its `except Exception` is deliberate: the DB row is already gone, so a Cloudinary network error must not become a 500.
 - **Tag checkboxes are grouped by `Tag.category`** via `grouped_tag_choices()`, shared by `ArtworkForm` and `ArtworkEditForm`. Grouping only affects rendering; `ModelMultipleChoiceField` still validates against the queryset.
+- **Medium is a tag, not a field.** `Artwork.medium` (free-text CharField) was removed in migration `0002`. It duplicated the medium-category tags on every artwork and produced one-off values like `'graphite and charcoal'` that polluted the browse dropdown. Medium is now whichever tags have `category == 'medium'`.
+- **An artwork may have several mediums, but needs at least one.** Enforced in `GroupedTagsMixin.clean()`, not the database, so the browse filter stays complete. Multiple mediums are the point: 'Reaching out' is graphite *and* charcoal.
+- **`new_medium` is a free-text escape hatch, medium only.** An artist whose medium isn't listed types it and it becomes a `Tag(category='medium')`. Technique and subject stay a curated list so they don't fill with near-duplicates.
+- **The new tag is created in `save()`, never in `clean()`.** Creating during validation leaves orphan tags whenever the surrounding request fails for another reason — on upload, `CritiqueRequestForm` is validated alongside and either can fail. `save()` mutates `cleaned_data['tags']`, which `save_m2m()` reads later, so it works with both `commit=True` and the views' `commit=False` pattern.
+- **New medium lookup is `name__iexact`.** `Tag.name` is unique but that constraint is case-sensitive, so 'Oil'/'oil'/' oil ' would otherwise become three tags. A name already taken by a non-medium tag is rejected with a pointer to the right list, rather than silently attaching a subject tag as a medium.
+- **`Artwork.medium_names()` filters `self.tags.all()` in Python**, not with `.filter(category=...)`. The views already `prefetch_related('tags')`, so this reuses that cache instead of firing a query per artwork on browse. Verified: 2 queries total for the whole page.
+- **The browse `medium` query param is a Tag id**, not a name. Medium and tag are applied as two separate `.filter()` calls, which means "has both tags" — one combined call would ask for a single tag matching both ids. The queryset is `.distinct()` because each join can repeat a row. The Tag dropdown excludes medium-category tags, since medium has its own dropdown.
+- **`accounts.User.primary_medium` is still free text** and has the same smell as the old `Artwork.medium`. Left alone for now; worth revisiting if profiles get a browse/filter feature.
 
 ## Gotchas already hit
 
@@ -74,6 +82,8 @@ Seeded accounts: gracie_m, haley_s, sana_k, terry_lb. Password: seedpass123
 - Pillow's `verify()` consumes the file object. Rewind with `seek(0)` afterwards or the upload to Cloudinary sends zero bytes — a bug that only shows up when the upload actually runs.
 - Artworks created through the admin used to lack a `CritiqueRequest`. The admin now has an inline, and the critique view redirects if one is missing.
 - Templates silently hide `AttributeError`s (e.g. a missing related object renders blank). Views surface them as 500s.
+- Reversing a `RemoveField` re-adds the column using the definition recorded in that migration. A `NOT NULL` column with no default cannot be added back to a table that already has rows — SQLite raises `IntegrityError: NOT NULL constraint failed`. Migration `0002` inserts an `AlterField` giving `medium` a `default=''` *before* the `RemoveField` purely so the migration can be reversed.
+- A declared `forms.Field` on a plain (non-`Form`) mixin is **not** picked up — Django's form metaclass only collects from base classes that have `declared_fields`. `GroupedTagsMixin` adds `new_medium` in `__init__` instead, which also places it after the tag chips.
 
 ## Current status
 
@@ -82,7 +92,8 @@ medium/tag/needs-critique filters, detail page, structured critiques, seed data.
 
 Since then: upload validation (size + real image check), duplicate-critique guard,
 Django messages wired into `base.html`, edit/delete for critiques, edit/delete for
-artworks, Cloudinary cleanup on delete, grouped tag checkboxes, `requirements.txt`.
+artworks, Cloudinary cleanup on delete, grouped tag checkboxes, `requirements.txt`,
+and medium folded into tags (migration `0002`, drops `Artwork.medium`).
 
 ## Next up
 

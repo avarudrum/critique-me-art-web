@@ -11,8 +11,10 @@ logger = logging.getLogger(__name__)
 
 # Defining the Tag model to categorize artworks by medium, technique, or subject.
 class Tag(models.Model):
+    MEDIUM = 'medium'
+
     CATEGORY_CHOICES = [
-        ('medium', 'Medium'),
+        (MEDIUM, 'Medium'),
         ('technique', 'Technique'),
         ('subject', 'Subject'),
     ]
@@ -39,7 +41,9 @@ class Artwork(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     image = CloudinaryField('artwork')
-    medium = models.CharField(max_length=50)
+    # Medium is not a field here: it lives in `tags` as Tag.category == 'medium'.
+    # It used to be a free-text CharField, which duplicated the medium tags and
+    # produced one-off values like "graphite and charcoal". See medium_names().
     tags = models.ManyToManyField(Tag, blank=True, related_name='artworks')
     critique_status = models.CharField(
         max_length=10, choices=STATUS_CHOICES, default='open'
@@ -51,6 +55,15 @@ class Artwork(models.Model):
 
     def __str__(self):
         return self.title
+
+    def medium_names(self):
+        """The names of this artwork's medium tags.
+
+        Filters in Python rather than with .filter(category=...) on purpose: the
+        views already prefetch_related('tags'), so this reuses that cache instead
+        of firing another query per artwork on the browse page.
+        """
+        return [tag.name for tag in self.tags.all() if tag.category == Tag.MEDIUM]
 
 
 # A signal rather than code in the delete view, so this also runs when an

@@ -10,8 +10,8 @@
         <select name="medium" id="medium">
             <option value="">All</option>
             {% for m in mediums %}
-                <option value="{{ m }}" {% if m == selected_medium %}selected{% endif %}>
-                    {{ m }}
+                <option value="{{ m.id }}" {% if m.id|stringformat:"s" == selected_medium %}selected{% endif %}>
+                    {{ m.name }}
                 </option>
             {% endfor %}
         </select>
@@ -46,7 +46,7 @@
                 <h2>
                     <a href="{% url 'artwork_detail' artwork.pk %}">{{ artwork.title }}</a>
                 </h2>
-                <p>{{ artwork.user.username }} · {{ artwork.medium }}</p>
+                <p>{{ artwork.user.username }} · {{ artwork.medium_names|join:", " }}</p>
                 {% if artwork.critique_request.focus_areas %}
                     <p>Wants feedback on:
                         {{ artwork.critique_request.focus_areas|join:", " }}

@@ -4,7 +4,7 @@
 
 {% block content %}
     <h1>Critique: {{ artwork.title }}</h1>
-    <p>by {{ artwork.user.username }} · {{ artwork.medium }}</p>
+    <p>by {{ artwork.user.username }} · {{ artwork.medium_names|join:", " }}</p>
 
     <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}" style="max-width: 500px;">
 

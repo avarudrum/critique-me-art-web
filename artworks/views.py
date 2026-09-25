@@ -11,14 +11,17 @@ def browse(request):
     artworks = Artwork.objects.select_related('user').prefetch_related('tags')
 
     # Reading query parameters from the request to filter artworks based on medium, tag, and critique status.
-    medium = request.GET.get('medium', '').strip()
+    # `medium` is now a Tag id, since medium lives in tags rather than its own field.
+    medium_id = request.GET.get('medium', '').strip()
     tag_id = request.GET.get('tag', '').strip()
     needs_critique = request.GET.get('needs_critique')
 
     # Conditionally filter artworks based on the provided query parameters.
-    if medium:
-        # Case insensitive filtering for medium.
-        artworks = artworks.filter(medium__iexact=medium)
+    # Medium and tag are deliberately two separate .filter() calls: chaining them
+    # means "has both tags". Putting both in one call would ask for a single tag
+    # that somehow matches both ids, which nothing can.
+    if medium_id.isdigit():
+        artworks = artworks.filter(tags__id=int(medium_id))
 
     if tag_id.isdigit():
         # Gaurds against invalid tag IDs by checking if it is a digit before filtering.
@@ -27,17 +30,22 @@ def browse(request):
     if needs_critique:
         artworks = artworks.filter(critique_status='open')
 
+    # Each join above can repeat a row, so collapse duplicates.
+    artworks = artworks.distinct()
+
+    # Only mediums actually in use, so the dropdown never offers an empty result.
     mediums = (
-        Artwork.objects.values_list('medium', flat=True)
+        Tag.objects.filter(category=Tag.MEDIUM, artworks__isnull=False)
         .distinct()
-        .order_by('medium')
+        .order_by('name')
     )
 
     return render(request, 'artworks/browse.html', {
         'artworks': artworks,
-        'tags': Tag.objects.all().order_by('category', 'name'),
+        # Mediums have their own dropdown now, so leave them out of this one.
+        'tags': Tag.objects.exclude(category=Tag.MEDIUM).order_by('category', 'name'),
         'mediums': mediums,
-        'selected_medium': medium,
+        'selected_medium': medium_id,
         'selected_tag': tag_id,
         'needs_critique': needs_critique,
     })

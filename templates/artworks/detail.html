@@ -7,7 +7,7 @@
         <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}" style="max-width: 600px;">
 
         <h1>{{ artwork.title }}</h1>
-        <p>by {{ artwork.user.username }} · {{ artwork.medium }}</p>
+        <p>by {{ artwork.user.username }} · {{ artwork.medium_names|join:", " }}</p>
 
         {% if artwork.description %}
             <p>{{ artwork.description }}</p>
