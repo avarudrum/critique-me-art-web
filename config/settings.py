@@ -23,6 +23,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'cloudinary_storage',
     'django.contrib.staticfiles',
+    # Required by FORM_RENDERER below: it is what makes Django's own built-in
+    # widget templates discoverable once form rendering goes through TEMPLATES.
+    'django.forms',
     'cloudinary',
     'accounts',
     'artworks',
@@ -57,6 +60,14 @@ TEMPLATES = [
         },
     },
 ]
+
+# By default Django renders form widgets through a private template engine that
+# only sees django/forms/templates and app-level template dirs -- it cannot see
+# the project-level `templates/` directory configured above. This setting routes
+# widget rendering through TEMPLATES instead, so a custom widget template can
+# live at templates/artworks/widgets/ with every other template.
+# It requires 'django.forms' in INSTALLED_APPS.
+FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 
 WSGI_APPLICATION = 'config.wsgi.application'
 

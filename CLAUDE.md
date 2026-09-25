@@ -63,6 +63,9 @@ Seeded accounts: gracie_m, haley_s, sana_k, terry_lb. Password: seedpass123
 - **Destructive actions are POST-only.** GET renders a confirmation page. A GET that deletes data fires on crawlers and link previews.
 - **Cloudinary cleanup lives in a `post_delete` signal** on `Artwork`, not in the delete view, so it also runs for admin deletes and for cascades from a deleted user. Its `except Exception` is deliberate: the DB row is already gone, so a Cloudinary network error must not become a 500.
 - **Tag checkboxes are grouped by `Tag.category`** via `grouped_tag_choices()`, shared by `ArtworkForm` and `ArtworkEditForm`. Grouping only affects rendering; `ModelMultipleChoiceField` still validates against the queryset.
+- **The tag picker is never paginated.** `GroupedTagSelect` hides a category's long tail behind a `<details>` instead. Collapsed options stay in the DOM, so a ticked box inside one still submits — paging would split one form across requests and silently drop selections made on a page the user navigated away from. Two knobs: `visible_per_group = 8` and `min_overflow = 3` (don't collapse a tail so short that the toggle costs more than it saves). In practice nothing collapses until a category has 11 tags.
+- **Usage decides which tags are visible, alphabet decides their order.** `grouped_tag_choices()` orders by `Count('artworks')` so the least-used tags fall into the overflow; `GroupedTagSelect.get_context()` then re-sorts each half by name so chips don't shuffle around as counts change.
+- **A `<details>` renders `open` when it hides a ticked box** (`overflow_has_selection`), so someone editing an artwork can always see every tag they chose.
 - **Medium is a tag, not a field.** `Artwork.medium` (free-text CharField) was removed in migration `0002`. It duplicated the medium-category tags on every artwork and produced one-off values like `'graphite and charcoal'` that polluted the browse dropdown. Medium is now whichever tags have `category == 'medium'`.
 - **An artwork may have several mediums, but needs at least one.** Enforced in `GroupedTagsMixin.clean()`, not the database, so the browse filter stays complete. Multiple mediums are the point: 'Reaching out' is graphite *and* charcoal.
 - **`new_medium` is a free-text escape hatch, medium only.** An artist whose medium isn't listed types it and it becomes a `Tag(category='medium')`. Technique and subject stay a curated list so they don't fill with near-duplicates.
@@ -83,6 +86,7 @@ Seeded accounts: gracie_m, haley_s, sana_k, terry_lb. Password: seedpass123
 - Artworks created through the admin used to lack a `CritiqueRequest`. The admin now has an inline, and the critique view redirects if one is missing.
 - Templates silently hide `AttributeError`s (e.g. a missing related object renders blank). Views surface them as 500s.
 - Reversing a `RemoveField` re-adds the column using the definition recorded in that migration. A `NOT NULL` column with no default cannot be added back to a table that already has rows — SQLite raises `IntegrityError: NOT NULL constraint failed`. Migration `0002` inserts an `AlterField` giving `medium` a `default=''` *before* the `RemoveField` purely so the migration can be reversed.
+- Django renders form widgets through a **private template engine** that only sees `django/forms/templates` and app-level template dirs — it cannot see the project-level `templates/`. `FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'` in settings routes widget rendering through `TEMPLATES` instead, which is what lets `templates/artworks/widgets/` work. That setting requires `'django.forms'` in `INSTALLED_APPS`, or Django's own built-in widget templates stop resolving.
 - A declared `forms.Field` on a plain (non-`Form`) mixin is **not** picked up — Django's form metaclass only collects from base classes that have `declared_fields`. `GroupedTagsMixin` adds `new_medium` in `__init__` instead, which also places it after the tag chips.
 
 ## Current status
@@ -104,5 +108,20 @@ and medium folded into tags (migration `0002`, drops `Artwork.medium`).
    move to a real stylesheet as part of this step.
 3. README explaining the product idea, stack, and local setup.
 4. Deploy (Railway or Render) with PostgreSQL.
+
+### Tag growth plan
+
+Step 1 is built (overflow disclosure, above). Remaining steps, in order, to be
+done only when the tag list actually justifies them:
+
+2. **"Did you mean?" on tag creation** — when someone types a near-match of an
+   existing tag, offer the existing one with a one-click swap. Do this *before*
+   opening free-text input to technique and subject, not after. Display is the
+   symptom; uncontrolled creation is the disease. 6 of 23 tags already have zero
+   artworks, and casing is already inconsistent (`Underpainting`, `Impressionism`).
+3. **Filter box** — ~15 lines of vanilla JS hiding non-matching chips as you type.
+   Worth it once a category realistically passes ~30. Everything stays in the DOM,
+   so selections are still safe.
+4. Server-side autocomplete via HTMX only matters at thousands of tags.
 
 Out of scope for now: guides/lessons, following, feeds, notifications, reputation, revision threads.

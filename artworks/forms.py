@@ -1,6 +1,7 @@
 import re
 
 from django import forms
+from django.db.models import Count
 from django.template.defaultfilters import filesizeformat
 from PIL import Image, UnidentifiedImageError
 from core.constants import FOCUS_AREAS, MAX_IMAGE_BYTES
@@ -13,9 +14,14 @@ def grouped_tag_choices():
     Django's ChoiceWidget understands this nested shape and renders each bucket
     as its own labelled group, which turns one long flat column of checkboxes
     into three short scannable ones.
+
+    Ordered by how many artworks use each tag, so that when a category outgrows
+    GroupedTagSelect.visible_per_group it is the least-used tags that get tucked
+    away. Ties break alphabetically.
     """
     by_category = {}
-    for tag in Tag.objects.order_by('name'):
+    tags = Tag.objects.annotate(use_count=Count('artworks')).order_by('-use_count', 'name')
+    for tag in tags:
         by_category.setdefault(tag.category, []).append((tag.pk, tag.name))
 
     # Follow the order declared on Tag.CATEGORY_CHOICES rather than alphabetical,
@@ -25,6 +31,49 @@ def grouped_tag_choices():
         for key, label in Tag.CATEGORY_CHOICES
         if key in by_category
     ]
+
+
+class GroupedTagSelect(forms.CheckboxSelectMultiple):
+    """Checkboxes grouped by category, with the long tail behind a <details>.
+
+    Only the most-used `visible_per_group` tags in each category are shown up
+    front; the rest sit in a collapsed "N more" disclosure. Collapsed options are
+    still in the DOM, so a box ticked inside one is submitted normally -- that is
+    exactly why this works where paginating the picker would not, since paging
+    would drop selections made on a page you navigated away from.
+
+    Does nothing until a category actually exceeds the threshold.
+    """
+
+    template_name = 'artworks/widgets/grouped_tag_select.html'
+    visible_per_group = 8
+    # Hiding one or two tags behind a "2 more" toggle costs a click and saves
+    # almost no space, so don't collapse until the tail is worth collapsing.
+    min_overflow = 3
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+
+        groups = []
+        for label, options, _index in context['widget']['optgroups']:
+            head, tail = options[:self.visible_per_group], options[self.visible_per_group:]
+            if len(tail) < self.min_overflow:
+                head, tail = options, []
+
+            # Usage decides which tags are visible; alphabetical order decides how
+            # they are arranged, so chips don't shuffle around as counts change.
+            by_name = lambda option: option['label'].lower()
+            groups.append({
+                'label': label,
+                'visible': sorted(head, key=by_name),
+                'overflow': sorted(tail, key=by_name),
+                # Open the disclosure when it hides a ticked box, so someone
+                # editing an artwork can always see every tag they have chosen.
+                'overflow_has_selection': any(option['selected'] for option in tail),
+            })
+
+        context['widget']['groups'] = groups
+        return context
 
 
 class GroupedTagsMixin:
@@ -122,7 +171,7 @@ class ArtworkForm(GroupedTagsMixin, forms.ModelForm):
         fields = ('title', 'description', 'image', 'tags')
         widgets = {
             'description': forms.Textarea(attrs={'rows': 3}),
-            'tags': forms.CheckboxSelectMultiple(),
+            'tags': GroupedTagSelect(),
         }
 
     def clean_image(self):
@@ -169,7 +218,7 @@ class ArtworkEditForm(GroupedTagsMixin, forms.ModelForm):
         fields = ('title', 'description', 'tags')
         widgets = {
             'description': forms.Textarea(attrs={'rows': 3}),
-            'tags': forms.CheckboxSelectMultiple(),
+            'tags': GroupedTagSelect(),
         }
 
 

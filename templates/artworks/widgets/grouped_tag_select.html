@@ -1,0 +1,35 @@
+{% comment %}
+Template for GroupedTagSelect. One block per tag category, with the least-used
+tags tucked into a <details> once a category passes the threshold.
+
+Everything stays inside the form, including collapsed options, so a ticked box
+in the overflow still submits.
+{% endcomment %}
+<div class="tag-picker"{% if widget.attrs.id %} id="{{ widget.attrs.id }}"{% endif %}>
+    {% for group in widget.groups %}
+        <div class="tag-group">
+            {% if group.label %}
+                <p class="tag-group-label">{{ group.label }}</p>
+            {% endif %}
+
+            {% for option in group.visible %}
+                <div class="tag-option">
+                    {% include option.template_name with widget=option %}
+                </div>
+            {% endfor %}
+
+            {% if group.overflow %}
+                <details class="tag-overflow"{% if group.overflow_has_selection %} open{% endif %}>
+                    <summary>{{ group.overflow|length }} more</summary>
+                    <div class="tag-overflow-options">
+                        {% for option in group.overflow %}
+                            <div class="tag-option">
+                                {% include option.template_name with widget=option %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </details>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
