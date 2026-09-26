@@ -1,9 +1,41 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Sum
+from django.db.models.functions import Length
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import ArtworkForm, ArtworkEditForm, CritiqueRequestForm
 from .models import Artwork, Tag
 from core.constants import FOCUS_AREAS
+from critiques.models import Critique
+
+def home(request):
+    """Landing page, showing one real critique as a specimen.
+
+    Picked by substance -- most areas answered, then longest -- rather than by
+    recency or by which artwork has the most critiques. Those would happily put
+    a one-word "nice!" on the front page; this cannot.
+
+    Everything is optional: if nothing has been critiqued yet the template just
+    leaves the section out.
+    """
+    example = (
+        Critique.objects
+        .annotate(section_count=Count('sections'),
+                  body_length=Sum(Length('sections__body')))
+        .filter(section_count__gt=0)
+        .select_related('user', 'artwork', 'artwork__user', 'artwork__critique_request')
+        .prefetch_related('sections', 'artwork__tags')
+        .order_by('-section_count', '-body_length')
+        .first()
+    )
+
+    # Every answered area goes through: the slideshow shows one at a time, so
+    # length is no longer a reason to truncate the list.
+    return render(request, 'home.html', {
+        'example': example,
+        'example_sections': list(example.sections.all()) if example else [],
+    })
+
 
 @login_required
 def browse(request):

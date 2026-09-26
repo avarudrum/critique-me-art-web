@@ -22,7 +22,9 @@ This is a portfolio project for internship applications. The developer is a
 - Django 5.2, Python 3.11, virtual environment in `venv/`
 - SQLite locally (PostgreSQL planned for deployment)
 - Cloudinary for image storage via `CloudinaryField`
-- Plain Django templates with minimal CSS so far. HTMX planned but not added.
+- Plain Django templates, one hand-written stylesheet, no CSS framework and no
+  build step. **No JavaScript at all** — the tag overflow and the landing-page
+  critique slideshow are both pure CSS, deliberately. HTMX planned but not added.
 - Secrets in `.env` (gitignored), loaded with python-dotenv. See `.env.example`.
 
 ## Commands
@@ -39,8 +41,8 @@ Seeded accounts: gracie_m, haley_s, sana_k, terry_lb. Password: seedpass123
 ## Structure
 
 - `config/` — settings and root URLs
-- `accounts/` — custom `User` (extends `AbstractUser`: bio, primary_medium, created_at). `AUTH_USER_MODEL = 'accounts.User'`
-- `artworks/` — `Tag`, `Artwork`, `CritiqueRequest`; upload, detail, browse, edit, delete views; `management/commands/seed.py`
+- `accounts/` — custom `User` (extends `AbstractUser`: bio, primary_medium, created_at). `AUTH_USER_MODEL = 'accounts.User'`. Signup, profile and profile-editing views; `LoginForm`/`LogoutWithNoticeView` exist only so auth pages match the rest of the site
+- `artworks/` — `Tag`, `Artwork`, `CritiqueRequest`; upload, detail, browse, edit, delete views, plus `home` (the landing page, routed from `config/urls.py` at `/`); `management/commands/seed.py`
 - `critiques/` — `Critique`, `CritiqueSection`; formset-based create/edit views, delete view
 - `core/constants.py` — `FOCUS_AREAS`, the single source of truth for feedback areas. Not a Django app.
 - `templates/` — all templates live here at project level, namespaced by app (`templates/artworks/...`), plus `registration/` for auth
@@ -61,6 +63,34 @@ Seeded accounts: gracie_m, haley_s, sana_k, terry_lb. Password: seedpass123
 - **Profiles live at `/artist/<username>/`, wired in `config/urls.py`.** Deliberately *not* under `accounts/`: a `<str:username>` route there would shadow Django's own `accounts/logout/` and `accounts/password_reset/`. Readable by any member, not just the owner — seeing what someone has written before is how you judge their critique.
 - **`bio` and `primary_medium` finally have a UI** (`ProfileForm`, `/accounts/settings/`). They had been on the model since the start but were admin-only, so a profile page would have rendered permanently empty.
 - **The nav is three groups:** wordmark, `.nav-sections` (Browse, Upload) beside it, and `.nav-account` pushed right by `margin-left: auto`. The auto margin lives on the account group — putting it on the wordmark shoves *everything* right.
+- **The landing page critique is a slideshow with no JavaScript.** A hidden radio
+  group drives it: the radios sit ahead of the nav and track as siblings, and the
+  CSS reaches them with `~`. The tabs are the focus-area names rather than dots,
+  so clicking through *is* the product idea. One selector pair per slide, five
+  being the ceiling by design (one section per area, five areas in
+  `core.constants.FOCUS_AREAS`). The radios are `.visually-hidden` but stay
+  focusable, so the group is arrow-key navigable; the focus ring is drawn on the
+  matching tab because the radio itself is off-screen.
+- **The landing page shows one real critique, not a mock-up.** `artworks.views.home`
+  picks it by *substance* — most areas answered, then longest — never by recency or
+  by which artwork has the most critiques. Those heuristics would have put a
+  one-word "nice!" on the front page, because that is literally what the newest
+  critique on the most-critiqued artwork was. The section is wrapped in
+  `{% if example %}`, so an empty database just omits it. Three queries.
+  It reuses `.artwork-plate`, `.focus-list` and `.critique-section` so it reads
+  as part of the site rather than a marketing panel.
+- **The landing page is three left-aligned blocks sharing one grid.** Statement,
+  then the definition, then the critique specimen, separated by hairline rules and
+  equal spacing. The definition and the specimen both use `.grid-2`, so the word
+  *atelier* sits on the same column edge as the artwork below it and its
+  definition on the same edge as the critique. **The alignment is the structure:**
+  there is no ornament on this page, and adding any back is the thing that made
+  earlier versions look homemade. An earlier design set the definition as a tinted
+  panel with an accent bar; that reads as a framework alert component, not a
+  gallery label. The decorative rule above the headline went the same way.
+- **The accent appears twice on the landing page and nowhere else in the hero:**
+  *critique* in the headline and the tagline beneath it, both italic serif in
+  `--accent`. Resist adding a third.
 - **Copy is a studio voice, not a product voice.** Plain, concrete, a bit dry. No "empowering artists to unlock feedback". Section names stay boring and obvious ("Browse", not "The wall") — the voice belongs in the landing page and helper text, not in navigation.
 - **`description` is capped at 1200 characters and `artist_note` at 600.** `TextField(max_length=...)` is form-level only — the DB column stays TEXT — which is what's wanted: it validates and puts a `maxlength` on the textarea, so the browser stops them first.
 - **No DB unique constraint on (artwork, user) for critiques** — kept as a view-level rule so revision threads stay possible later.
@@ -115,6 +145,15 @@ loudest thing on screen.
   nav's logout button. Buttons that need a different look (`.btn-danger`,
   `.medium-entry-add`) override it later in the file and need at least (0,1,1)
   specificity to win — hence the compound selectors.
+- **Structure comes from alignment, never ornament.** Shared column edges,
+  hairline rules and consistent spacing. Decorative elements that carry no
+  structure are what make a page read as homemade — a landing-page flourish was
+  added, resized twice, moved, and finally deleted, and deleting it was the fix.
+- **A shorthand property silently erases the longhands it covers.** Bitten twice:
+  `.site-main { padding: … 0 … }` zeroed `.shell`'s horizontal gutter on every
+  page, and `background: var(--paper-raised)` wiped the select chevron's
+  `background-image`. When two rules of equal specificity touch one element, use
+  the longhand (`padding-block`, `background-color`) in the later one.
 - **Labels have no trailing colon**, via `NoLabelSuffixMixin`. They are styled as
   letterspaced caps, and letter-spacing puts a gap before the colon.
 - **Long text must be actively contained.** Grid and flex children default to
@@ -128,6 +167,14 @@ loudest thing on screen.
 - **A `<select>` is sized by its widest `<option>`**, so the browse filters are
   capped (`max-width`) rather than left to size themselves — tag names run to 50
   characters, wider than a phone, and an uncapped select sets the page width.
+- **An element carrying `.shell` plus a layout class must not use the `padding`
+  shorthand.** `<main class="site-main shell">` had `.shell { padding: 0 1.8rem }`
+  silently overridden by `.site-main { padding: 2.8rem 0 4.5rem }` — same
+  specificity, later in the file, so the shorthand zeroed the horizontal gutter
+  everywhere. It went unnoticed for ages because above 1120px the `max-width`
+  centring fakes a gutter; below it, content sat flush against the window edge.
+  Those rules use `padding-block` now. Check with
+  `getComputedStyle(el).paddingLeft`, not by eye.
 - **`.site-nav` must wrap.** Without `flex-wrap`, the nav can't fit on a narrow
   screen and forces the whole document wider than the viewport, which shifts
   every page sideways, not just the header.
@@ -135,9 +182,28 @@ loudest thing on screen.
   uppercase-caps, which made each checkbox option read as a heading. The tag
   picker and `div.focus-picker` both restyle their labels back to sentence case.
 
+### Checking a layout actually works
+
+Screenshots lie about layout. Two measurements caught real bugs that eyeballing
+missed, both worth repeating after any layout change:
+
+```js
+// horizontal overflow — run via chromium --dump-dom at several widths
+document.documentElement.scrollWidth > window.innerWidth
+getComputedStyle(document.querySelector('.site-nav')).paddingLeft  // gutter alive?
+el.getBoundingClientRect().left                                    // columns aligned?
+```
+
+A screenshot also cannot click, so interactive CSS (the slideshow) has to be
+driven — click each label, then read `getComputedStyle(slide).display` — or all
+you have verified is that the first slide renders.
+
 ## Gotchas already hit
 
 - **Tests that save an `Artwork` with a real file upload hit your real Cloudinary account.** `CloudinaryField` uploads when the model is *saved*, not when the form validates, and Django's test database being throwaway doesn't help: dropping it never touches Cloudinary. Test scripts leaked tiny red-square PNGs into the Media Library this way. When writing the real test suite, give artworks a string public id (`image='fake_id'`) instead of a file, or patch `cloudinary.uploader.upload`. Related: the `post_delete` cleanup signal also fires in tests, calling `cloudinary.uploader.destroy` on whatever id the artwork has — harmless for a fake id, but it does reach the network.
+- `{# ... #}` is a **single-line** comment. Spanning one across several lines does
+  not comment anything out — the whole thing renders to the page as visible text.
+  Use `{% comment %}...{% endcomment %}` for anything multi-line.
 - Django escapes apostrophes to `&#x27;` in rendered output, so asserting on a
   message's raw text (`You're logged out`) fails even when the page is correct.
   Check `response.context['messages']` for content and match the escaped form in
@@ -171,10 +237,23 @@ loudest thing on screen.
 V1 core loop is complete: signup/login, upload with feedback request, browse with
 medium/tag/needs-critique filters, detail page, structured critiques, seed data.
 
-Since then: upload validation (size + real image check), duplicate-critique guard,
-Django messages wired into `base.html`, edit/delete for critiques, edit/delete for
-artworks, Cloudinary cleanup on delete, grouped tag checkboxes, `requirements.txt`,
-and medium folded into tags (migration `0002`, drops `Artwork.medium`).
+Since then, roughly in order:
+
+- upload validation (size cap + a real image check with Pillow), `requirements.txt`
+- duplicate-critique guard; Django messages wired into `base.html`
+- edit/delete for critiques and for artworks, with Cloudinary cleanup on delete
+- medium folded into tags (`artworks/0002`, drops `Artwork.medium`)
+- the tag picker: grouped by category, usage-ranked, overflow disclosure,
+  near-duplicate detection, and an explicit Add button with visible outcomes
+- full styling pass; static files set up
+- browsing put behind a login; landing page rebuilt as the public face
+- profiles at `/artist/<username>/` with bio/medium editing (`accounts/0002`)
+- signup auto-login, logout confirmation
+- `description`/`artist_note`/`bio` length caps (`artworks/0003`)
+
+**Still uncommitted at time of writing** — several rounds of the above. Check
+`git status`; new *untracked* paths are easy to miss and the app breaks without
+them (`static/`, `core/forms.py`, `templates/accounts/`, and the migrations).
 
 ## Next up
 
@@ -182,8 +261,22 @@ and medium folded into tags (migration `0002`, drops `Artwork.medium`).
 2. ~~Styling.~~ Done — see the Styling section above. Every page is styled and
    static files are set up. `{% block extra_head %}` still exists in `base.html`
    for page-specific additions, but nothing uses it now.
-3. README explaining the product idea, stack, and local setup.
-4. Deploy (Railway or Render) with PostgreSQL.
+3. **Deploy** (Railway or Render) with PostgreSQL. Recommended before the README,
+   which needs the live URL and the real setup steps. Already done: `SECRET_KEY`,
+   `DEBUG` and `ALLOWED_HOSTS` from env, and `STATIC_ROOT`. Still needed:
+   `dj-database-url` + `psycopg`, **whitenoise** (with `DEBUG=False` Django stops
+   serving static files entirely, so the site deploys looking completely
+   unstyled — this is the one that catches people), `gunicorn` and a start
+   command, `CSRF_TRUSTED_ORIGINS` for the deployed domain, and the matching
+   `requirements.txt` additions.
+4. README explaining the product idea, stack, and local setup.
+
+**Tests are still not in the repo.** Every `tests.py` is empty. A lot of test
+logic has been written and thrown away in scratch files; porting it is mostly
+transcription. Worth doing before the tag refactor below or before deploy,
+whichever comes first — `GroupedTagsMixin` is the most intricate code here
+(interim submits, error pruning, `is_valid()` deliberately returning False) and
+it is exactly the sort of thing that breaks quietly.
 
 ### Tag growth plan
 

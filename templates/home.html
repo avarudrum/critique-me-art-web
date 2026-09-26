@@ -1,60 +1,95 @@
 {% extends 'base.html' %}
 
-{% block title %}Atelier — pin it up, say what you're stuck on{% endblock %}
+{% block title %}Atelier{% endblock %}
 
 {% block content %}
-    <div class="hero">
-        <p class="eyebrow">A room for work in progress</p>
-        <h1>Pin it up.<br>Say what you're stuck on.</h1>
-        <p class="lede">
-            Nobody in a studio hangs a piece and waits for applause. They say the
-            background has gone flat, or the hands aren't reading, or the colour
-            has turned to mud — and the room answers <em>that</em>.
-        </p>
+    <header class="lede-block">
+        <h1>A studio for <em>critique</em>.</h1>
+        <p class="tagline">Get real feedback from real artists.</p>
 
         <div class="actions">
             {% if user.is_authenticated %}
                 <a class="btn" href="{% url 'browse' %}">Browse work</a>
-                <a class="btn btn-quiet" href="{% url 'upload_artwork' %}">Pin up new work</a>
+                <a class="btn btn-quiet" href="{% url 'upload_artwork' %}">Upload your work</a>
             {% else %}
                 <a class="btn" href="{% url 'signup' %}">Create an account</a>
                 <a class="link-quiet" href="{% url 'login' %}">or log in</a>
             {% endif %}
         </div>
-    </div>
+    </header>
 
-    <hr class="divider">
+    {% comment %}
+        A definition list is what this actually is. It shares .grid-2 with the
+        specimen below, so the term sits on the same column edge as the artwork
+        and the definition on the same edge as the critique. The alignment is
+        the structure -- no panel, no accent bar, no ornament.
+    {% endcomment %}
+    <dl class="definition grid-2">
+        <dt>
+            atelier
+            <span class="definition-say">ah-tel-YAY</span>
+        </dt>
+        <dd>an artist's studio, where students once learned from a master.</dd>
+    </dl>
 
-    <section>
-        <p class="eyebrow">How a critique works here</p>
-        <ol class="steps">
-            <li>
-                <span class="step-number">i</span>
-                <h2>Hang the work</h2>
-                <p>
-                    Upload the piece and write the question you're actually asking.
-                    “Is this finished?” gets you nothing. “Does the background read
-                    as a space or as flat colour?” gets you an answer.
+    {% if example %}
+        <section class="specimen grid-2">
+            <div>
+                <div class="artwork-plate">
+                    <img src="{{ example.artwork.image.url }}" alt="{{ example.artwork.title }}">
+                </div>
+                <p class="specimen-caption">
+                    {{ example.artwork.title }} ·
+                    {{ example.artwork.user.username }} ·
+                    {{ example.artwork.medium_names|join:", " }}
                 </p>
-            </li>
-            <li>
-                <span class="step-number">ii</span>
-                <h2>Name your areas</h2>
-                <p>
-                    Composition, colour, technique, concept, perspective. Tick the
-                    ones you want looked at. The rest stay closed — nobody is going
-                    to lecture you on anatomy when you asked about colour.
-                </p>
-            </li>
-            <li>
-                <span class="step-number">iii</span>
-                <h2>Read it back area by area</h2>
-                <p>
-                    Each critic writes to your areas, one at a time, in their own
-                    words. You get notes you can act on instead of a single box
-                    with “looks great!” in it.
-                </p>
-            </li>
-        </ol>
-    </section>
+            </div>
+
+            <div class="specimen-body">
+                {% if example.artwork.critique_request.focus_areas %}
+                    <p class="eyebrow">The artist asked about</p>
+                    <ul class="focus-list">
+                        {% for area in example.artwork.critique_request.focus_areas %}
+                            <li>{{ area|title }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                {% comment %}
+                    A radio group drives the slideshow, so it needs no
+                    JavaScript. The radios must stay ahead of the track and nav
+                    as siblings: the CSS reaches them with `~`.
+                {% endcomment %}
+                <div class="critique-slides">
+                    {% for section in example_sections %}
+                        <input class="slide-toggle visually-hidden" type="radio"
+                               name="critique-slide" id="cs{{ forloop.counter }}"
+                               {% if forloop.first %}checked{% endif %}>
+                    {% endfor %}
+
+                    {% if example_sections|length > 1 %}
+                        <div class="slide-nav">
+                            {% for section in example_sections %}
+                                <label for="cs{{ forloop.counter }}">
+                                    {{ section.get_category_display }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="slide-track">
+                        {% for section in example_sections %}
+                            <figure class="slide">
+                                <blockquote>{{ section.body|truncatewords:50 }}</blockquote>
+                                <figcaption>
+                                    {{ example.user.username }} on
+                                    {{ section.get_category_display|lower }}
+                                </figcaption>
+                            </figure>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </section>
+    {% endif %}
 {% endblock %}
