@@ -44,6 +44,8 @@ Seeded accounts: gracie_m, haley_s, sana_k, terry_lb. Password: seedpass123
 - `critiques/` — `Critique`, `CritiqueSection`; formset-based create/edit views, delete view
 - `core/constants.py` — `FOCUS_AREAS`, the single source of truth for feedback areas. Not a Django app.
 - `templates/` — all templates live here at project level, namespaced by app (`templates/artworks/...`), plus `registration/` for auth
+- `static/css/atelier.css` — the whole stylesheet, in numbered sections. `STATICFILES_DIRS` points here; `STATIC_ROOT` is `staticfiles/` for `collectstatic` at deploy time
+- `core/forms.py` — `NoLabelSuffixMixin`, shared by every form
 
 ## Key design decisions (please keep these)
 
@@ -53,6 +55,13 @@ Seeded accounts: gracie_m, haley_s, sana_k, terry_lb. Password: seedpass123
 - **No strength/growth labels.** This was tried and removed on purpose. Sections are free text; critics add praise in their own words if they want.
 - **Critics may answer any subset of the requested areas**, but at least one. Enforced in `BaseCritiqueSectionFormSet.clean()`. Blank sections aren't saved.
 - **Artists can't critique their own work.** Checked in the view.
+- **Browsing is behind a login.** `browse` and `artwork_detail` are `@login_required`, and the nav only offers them to members. `/` is the public landing page and the only thing a visitor sees. `LOGIN_URL`/`LOGIN_REDIRECT_URL` send them to browse once they're in, and `?next=` returns them to whatever they were trying to reach.
+- **Signing up logs you straight in.** `SignUpView.form_valid()` calls `login()` — they just chose the password, so making them retype it is friction with nothing behind it.
+- **Profiles live at `/artist/<username>/`, wired in `config/urls.py`.** Deliberately *not* under `accounts/`: a `<str:username>` route there would shadow Django's own `accounts/logout/` and `accounts/password_reset/`. Readable by any member, not just the owner — seeing what someone has written before is how you judge their critique.
+- **`bio` and `primary_medium` finally have a UI** (`ProfileForm`, `/accounts/settings/`). They had been on the model since the start but were admin-only, so a profile page would have rendered permanently empty.
+- **The nav is three groups:** wordmark, `.nav-sections` (Browse, Upload) beside it, and `.nav-account` pushed right by `margin-left: auto`. The auto margin lives on the account group — putting it on the wordmark shoves *everything* right.
+- **Copy is a studio voice, not a product voice.** Plain, concrete, a bit dry. No "empowering artists to unlock feedback". Section names stay boring and obvious ("Browse", not "The wall") — the voice belongs in the landing page and helper text, not in navigation.
+- **`description` is capped at 1200 characters and `artist_note` at 600.** `TextField(max_length=...)` is form-level only — the DB column stays TEXT — which is what's wanted: it validates and puts a `maxlength` on the textarea, so the browser stops them first.
 - **No DB unique constraint on (artwork, user) for critiques** — kept as a view-level rule so revision threads stay possible later.
 - **One critique per person per artwork**, enforced by an `.exists()` check at the top of `create_critique` (before the POST branch, so a double submit can't slip through). View-level on purpose, per the point above. Deleting your critique frees you to write a new one.
 - **Editing a critique syncs its sections.** Filled + existing → update, filled + new → create, cleared → the `CritiqueSection` is deleted. So clearing a box genuinely drops that area. The formset still requires at least one non-blank area.
@@ -84,7 +93,53 @@ Seeded accounts: gracie_m, haley_s, sana_k, terry_lb. Password: seedpass123
 - **The browse `medium` query param is a Tag id**, not a name. Medium and tag are applied as two separate `.filter()` calls, which means "has both tags" — one combined call would ask for a single tag matching both ids. The queryset is `.distinct()` because each join can repeat a row. The Tag dropdown excludes medium-category tags, since medium has its own dropdown.
 - **`accounts.User.primary_medium` is still free text** and has the same smell as the old `Artwork.medium`. Left alone for now; worth revisiting if profiles get a browse/filter feature.
 
+## Styling
+
+Gallery wall, not web app. Warm paper, near-black ink, **one** sienna accent,
+thin rules instead of boxes and shadows, and enough air that the artwork is the
+loudest thing on screen.
+
+- **Everything is a token.** Colours, fonts, spacing and widths are custom
+  properties on `:root` in `atelier.css`. Change the palette there, not in rules.
+- **Type pairing:** Cormorant Garamond for display and anything quoted
+  (titles, legends, artist notes, ledes); Inter for UI and body. Loaded from
+  Google Fonts in `base.html`, with a system fallback stack.
+- **`.eyebrow`** is the repeated small-caps label used above section headings.
+- **Artwork is never cropped.** Browse tiles and the detail plate both use
+  `object-fit: contain` on paper, which reads as a mat. Uniform tiles with
+  `cover` would crop the work, which is the wrong trade on a critique site.
+  The detail plate is capped at `76vh` so a tall portrait doesn't strand the
+  metadata column beside a run of empty paper.
+- **The generic button rule is scoped to `.site-main`** so it can't catch the
+  nav's logout button. Buttons that need a different look (`.btn-danger`,
+  `.medium-entry-add`) override it later in the file and need at least (0,1,1)
+  specificity to win — hence the compound selectors.
+- **Labels have no trailing colon**, via `NoLabelSuffixMixin`. They are styled as
+  letterspaced caps, and letter-spacing puts a gap before the colon.
+- **Long text must be actively contained.** Grid and flex children default to
+  `min-width: auto` and refuse to shrink below their content, so one long word
+  in a card widens its track and pushes text over the artwork beside it. Every
+  layout child is opted down to `min-width: 0`, `body` sets
+  `overflow-wrap: break-word`, and card text is line-clamped. Measured: with
+  those guards removed a single artwork's title stretched to 2287px inside a
+  1280px viewport.
+- **Selects are drawn, not native.** `appearance: none` plus an inline-SVG chevron. The shared input rule must use `background-color`, not the `background` shorthand, or it resets `background-image` and wipes the chevron — and the select rule has to come *after* it.
+- **A `<select>` is sized by its widest `<option>`**, so the browse filters are
+  capped (`max-width`) rather than left to size themselves — tag names run to 50
+  characters, wider than a phone, and an uncapped select sets the page width.
+- **`.site-nav` must wrap.** Without `flex-wrap`, the nav can't fit on a narrow
+  screen and forces the whole document wider than the viewport, which shifts
+  every page sideways, not just the header.
+- **Option labels are chips, not labels.** The global `label` rule is
+  uppercase-caps, which made each checkbox option read as a heading. The tag
+  picker and `div.focus-picker` both restyle their labels back to sentence case.
+
 ## Gotchas already hit
+
+- Headless Chrome clamps `--window-size` to a **500px minimum width**. Asking for
+  390 renders at 500 and crops, which looks exactly like a layout bug. Measure
+  overflow by comparing `documentElement.scrollWidth` to `window.innerWidth`
+  via `--dump-dom`, don't eyeball narrow screenshots.
 
 - `CloudinaryField` doesn't accept a Django `File` outside a form. In scripts, upload with `cloudinary.uploader.upload(path)` and assign `result['public_id']`.
 - Cloudinary free plan rejects images over 10 MB.
@@ -96,6 +151,13 @@ Seeded accounts: gracie_m, haley_s, sana_k, terry_lb. Password: seedpass123
 - Templates silently hide `AttributeError`s (e.g. a missing related object renders blank). Views surface them as 500s.
 - Reversing a `RemoveField` re-adds the column using the definition recorded in that migration. A `NOT NULL` column with no default cannot be added back to a table that already has rows — SQLite raises `IntegrityError: NOT NULL constraint failed`. Migration `0002` inserts an `AlterField` giving `medium` a `default=''` *before* the `RemoveField` purely so the migration can be reversed.
 - Django renders form widgets through a **private template engine** that only sees `django/forms/templates` and app-level template dirs — it cannot see the project-level `templates/`. `FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'` in settings routes widget rendering through `TEMPLATES` instead, which is what lets `templates/artworks/widgets/` work. That setting requires `'django.forms'` in `INSTALLED_APPS`, or Django's own built-in widget templates stop resolving.
+- `label_suffix` cannot be set as a class attribute — `BaseForm.__init__` assigns
+  `self.label_suffix` unconditionally and would overwrite it. `NoLabelSuffixMixin`
+  passes it through `kwargs` instead. `LoginView` builds its own form, so it has
+  to be handed `accounts.forms.LoginForm` explicitly in `config/urls.py`.
+- `display: inline-block` on a `<summary>` removes the default disclosure
+  triangle, leaving the toggle looking like inert text. The tag picker's "N more"
+  draws its own `+`/`–` marker.
 - A declared `forms.Field` on a plain (non-`Form`) mixin is **not** picked up — Django's form metaclass only collects from base classes that have `declared_fields`. `GroupedTagsMixin` adds `new_medium` in `__init__` instead, which also places it after the tag chips.
 
 ## Current status
@@ -111,10 +173,9 @@ and medium folded into tags (migration `0002`, drops `Artwork.medium`).
 ## Next up
 
 1. ~~Small fixes: friendly error for uploads over 10 MB; stop a user critiquing the same piece twice; success message after posting a critique.~~ Done.
-2. Styling. Focus on browse, artwork detail, and critique form first.
-   Static files aren't set up yet — no `static/` dir and no `STATICFILES_DIRS`.
-   Page-specific CSS currently goes in the `{% block extra_head %}` in `base.html`;
-   move to a real stylesheet as part of this step.
+2. ~~Styling.~~ Done — see the Styling section above. Every page is styled and
+   static files are set up. `{% block extra_head %}` still exists in `base.html`
+   for page-specific additions, but nothing uses it now.
 3. README explaining the product idea, stack, and local setup.
 4. Deploy (Railway or Render) with PostgreSQL.
 

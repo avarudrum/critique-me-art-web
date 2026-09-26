@@ -3,20 +3,29 @@
 {% block title %}Delete your critique — Atelier{% endblock %}
 
 {% block content %}
-    <h1>Delete this critique?</h1>
-    <p>Your critique on <a href="{% url 'artwork_detail' artwork.pk %}">{{ artwork.title }}</a>
-       by {{ artwork.user.username }} will be removed. This can't be undone.</p>
+    <div class="page-head">
+        <p class="eyebrow">Confirm</p>
+        <h1>Delete this critique?</h1>
+        <p class="meta">
+            Your critique on <a href="{% url 'artwork_detail' artwork.pk %}">{{ artwork.title }}</a>
+            by {{ artwork.user.username }} will be removed. This can't be undone.
+        </p>
+    </div>
 
-    {% for section in critique.sections.all %}
-        <div>
-            <strong>{{ section.get_category_display }}</strong>
-            <p>{{ section.body|linebreaksbr }}</p>
-        </div>
-    {% endfor %}
+    <div class="confirm-panel">
+        {% for section in critique.sections.all %}
+            <div class="critique-section">
+                <p class="eyebrow">{{ section.get_category_display }}</p>
+                <p>{{ section.body|linebreaksbr }}</p>
+            </div>
+        {% endfor %}
 
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit">Yes, delete it</button>
-        <a href="{% url 'artwork_detail' artwork.pk %}">Cancel</a>
-    </form>
+        <form method="post">
+            {% csrf_token %}
+            <div class="actions">
+                <button type="submit" class="btn-danger">Yes, delete it</button>
+                <a class="link-quiet" href="{% url 'artwork_detail' artwork.pk %}">Cancel</a>
+            </div>
+        </form>
+    </div>
 {% endblock %}

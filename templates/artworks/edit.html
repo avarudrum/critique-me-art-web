@@ -2,21 +2,33 @@
 
 {% block title %}Edit {{ artwork.title }} — Atelier{% endblock %}
 
-{% block extra_head %}{% include 'artworks/_tag_picker_css.html' %}{% endblock %}
-
 {% block content %}
-    <h1>Edit artwork details</h1>
+    <div class="page-head">
+        <p class="eyebrow">Editing</p>
+        <h1>{{ artwork.title }}</h1>
+    </div>
 
-    <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}" style="max-width: 400px;">
+    <div class="composer-layout">
+        <div>
+            <div class="artwork-plate">
+                <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}">
+            </div>
+        </div>
 
-    <p>The image and the feedback areas you asked about can't be changed, because
-       existing critiques were written about them.</p>
+        <form method="post">
+            {% csrf_token %}
+            <p class="meta muted">
+                Text and tags are yours to change. The image and the areas you
+                asked about stay put — critiques already answer those.
+            </p>
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        {% include 'artworks/_medium_suggestions.html' %}
-        <button type="submit">Save changes</button>
-        <a href="{% url 'artwork_detail' artwork.pk %}">Cancel</a>
-    </form>
+            {{ form.as_p }}
+            {% include 'artworks/_medium_suggestions.html' %}
+
+            <div class="actions">
+                <button type="submit">Save changes</button>
+                <a class="link-quiet" href="{% url 'artwork_detail' artwork.pk %}">Cancel</a>
+            </div>
+        </form>
+    </div>
 {% endblock %}

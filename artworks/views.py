@@ -5,6 +5,7 @@ from .forms import ArtworkForm, ArtworkEditForm, CritiqueRequestForm
 from .models import Artwork, Tag
 from core.constants import FOCUS_AREAS
 
+@login_required
 def browse(request):
     # Prevents n+1 query problem. 
     # Optimizes database queries by fetching related user and tags in a single query.
@@ -107,6 +108,7 @@ def upload_artwork(request):
         'request_form': request_form,
     })
 
+@login_required
 def artwork_detail(request, pk):
     artwork = get_object_or_404(
         Artwork.objects.prefetch_related('critiques__sections', 'tags'),

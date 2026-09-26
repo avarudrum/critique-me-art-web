@@ -1,6 +1,60 @@
 {% extends 'base.html' %}
 
+{% block title %}Atelier — pin it up, say what you're stuck on{% endblock %}
+
 {% block content %}
-    <h1>Atelier</h1>
-    <p>Structured critique for artists.</p>
+    <div class="hero">
+        <p class="eyebrow">A room for work in progress</p>
+        <h1>Pin it up.<br>Say what you're stuck on.</h1>
+        <p class="lede">
+            Nobody in a studio hangs a piece and waits for applause. They say the
+            background has gone flat, or the hands aren't reading, or the colour
+            has turned to mud — and the room answers <em>that</em>.
+        </p>
+
+        <div class="actions">
+            {% if user.is_authenticated %}
+                <a class="btn" href="{% url 'browse' %}">Browse work</a>
+                <a class="btn btn-quiet" href="{% url 'upload_artwork' %}">Pin up new work</a>
+            {% else %}
+                <a class="btn" href="{% url 'signup' %}">Create an account</a>
+                <a class="link-quiet" href="{% url 'login' %}">or log in</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <section>
+        <p class="eyebrow">How a critique works here</p>
+        <ol class="steps">
+            <li>
+                <span class="step-number">i</span>
+                <h2>Hang the work</h2>
+                <p>
+                    Upload the piece and write the question you're actually asking.
+                    “Is this finished?” gets you nothing. “Does the background read
+                    as a space or as flat colour?” gets you an answer.
+                </p>
+            </li>
+            <li>
+                <span class="step-number">ii</span>
+                <h2>Name your areas</h2>
+                <p>
+                    Composition, colour, technique, concept, perspective. Tick the
+                    ones you want looked at. The rest stay closed — nobody is going
+                    to lecture you on anatomy when you asked about colour.
+                </p>
+            </li>
+            <li>
+                <span class="step-number">iii</span>
+                <h2>Read it back area by area</h2>
+                <p>
+                    Each critic writes to your areas, one at a time, in their own
+                    words. You get notes you can act on instead of a single box
+                    with “looks great!” in it.
+                </p>
+            </li>
+        </ol>
+    </section>
 {% endblock %}

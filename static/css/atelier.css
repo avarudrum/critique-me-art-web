@@ -1,0 +1,1200 @@
+/* Atelier — gallery-wall styling.
+   Warm paper, near-black ink, one sienna accent. Thin rules instead of boxes
+   and shadows, and enough air that the artwork is the loudest thing on screen.
+
+   Sections:
+     1. tokens
+     2. base + typography
+     3. layout + nav
+     4. messages
+     5. buttons + links
+     6. forms
+     7. tag picker
+     8. browse grid
+     9. artwork detail
+    10. critiques
+*/
+
+/* ---------------------------------------------------------------- 1. tokens */
+
+:root {
+    /* paper warms as it recedes: page < card < raised */
+    --paper: #f7f4ee;
+    --paper-card: #fbf9f5;
+    --paper-raised: #fffefb;
+
+    --ink: #1c1a17;
+    --ink-soft: #5f584e;
+    --ink-faint: #948c80;
+
+    --rule: #e3ddd2;
+    --rule-strong: #cfc7b9;
+
+    /* sienna: the only saturated colour in the palette, used sparingly */
+    --accent: #9d4b2c;
+    --accent-deep: #7d3a20;
+    --accent-wash: #f3e7e0;
+
+    --ok: #4a7a52;
+    --ok-wash: #eef4ee;
+    --warn: #9a7420;
+    --warn-wash: #f8f2e2;
+    --error: #a33a2c;
+    --error-wash: #f9ebe8;
+    --focus: #2f6f9f;
+
+    --serif: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    --measure: 68ch;
+    --shell: 1120px;
+
+    --space-1: 0.35rem;
+    --space-2: 0.7rem;
+    --space-3: 1.1rem;
+    --space-4: 1.8rem;
+    --space-5: 2.8rem;
+    --space-6: 4.5rem;
+}
+
+/* ------------------------------------------------- 2. base + typography */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 1rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    /* A long unbroken string -- a pasted URL, a run-on tag name -- would
+       otherwise refuse to wrap and push its way out of the layout. */
+    overflow-wrap: break-word;
+}
+
+/* Grid and flex children default to `min-width: auto`, which means they refuse
+   to shrink below their content. One long word in a card is then enough to
+   widen its track and shove text over the artwork beside it. Opting every
+   layout child down to 0 is what actually contains the text. */
+.gallery > *,
+.artwork-layout > *,
+.composer-layout > *,
+.critique-list > * {
+    min-width: 0;
+}
+
+h1, h2, h3, h4 {
+    font-family: var(--serif);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: 0.005em;
+    margin: 0 0 var(--space-3);
+}
+
+h1 { font-size: clamp(2.1rem, 4.5vw, 3.1rem); }
+h2 { font-size: clamp(1.5rem, 3vw, 2rem); }
+h3 { font-size: 1.25rem; }
+
+p {
+    margin: 0 0 var(--space-3);
+    max-width: var(--measure);
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* small caps label, used for section headings and metadata throughout */
+.eyebrow {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 var(--space-2);
+}
+
+.lede {
+    font-family: var(--serif);
+    font-size: clamp(1.15rem, 2.2vw, 1.5rem);
+    line-height: 1.45;
+    color: var(--ink-soft);
+}
+
+.meta {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+}
+
+.muted {
+    color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------ 3. layout + nav */
+
+.shell {
+    max-width: var(--shell);
+    margin: 0 auto;
+    padding: 0 var(--space-4);
+}
+
+.site-main {
+    padding: var(--space-5) 0 var(--space-6);
+}
+
+.site-header {
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+}
+
+.site-nav {
+    display: flex;
+    align-items: baseline;
+    /* Without wrapping, the nav simply refuses to fit on a narrow screen and
+       forces the whole document wider than the viewport -- which shifts every
+       page sideways, not just the header. */
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    padding: var(--space-3) 0;
+}
+
+.site-nav .wordmark {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    text-decoration: none;
+}
+
+/* Section links sit immediately after the wordmark. The account group takes the
+   auto margin instead, so it is what gets pushed to the right edge. */
+.nav-sections,
+.nav-account {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+}
+
+.nav-account {
+    margin-left: auto;
+}
+
+.site-nav .wordmark:hover {
+    color: var(--accent);
+}
+
+.nav-link {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding-bottom: 2px;
+    border-bottom: 1px solid transparent;
+}
+
+.nav-link:hover {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+}
+
+.nav-user {
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+}
+
+/* the logout form has to be a POST, so make its button look like a nav link */
+.nav-form {
+    display: inline;
+    margin: 0;
+}
+
+.nav-form button {
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: none;
+    border: 0;
+    padding: 0 0 2px;
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+}
+
+.nav-form button:hover {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+}
+
+/* a hairline rule with breathing room, used between major page sections */
+.divider {
+    border: 0;
+    border-top: 1px solid var(--rule);
+    margin: var(--space-5) 0;
+}
+
+.page-head {
+    margin-bottom: var(--space-5);
+}
+
+.page-head h1 {
+    margin-bottom: var(--space-2);
+}
+
+/* the landing page: the only thing a visitor sees before signing up */
+.hero {
+    padding: var(--space-5) 0 var(--space-4);
+    max-width: 40rem;
+}
+
+.hero h1 {
+    margin-bottom: var(--space-3);
+}
+
+.hero .lede {
+    max-width: 34rem;
+}
+
+.steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-5) var(--space-4);
+    list-style: none;
+    margin: var(--space-4) 0 0;
+    padding: 0;
+    counter-reset: step;
+}
+
+.steps > li {
+    min-width: 0;
+    border-top: 1px solid var(--rule);
+    padding-top: var(--space-3);
+}
+
+.steps h2 {
+    font-size: 1.35rem;
+    margin: var(--space-2) 0 var(--space-2);
+}
+
+.steps p {
+    max-width: none;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    margin: 0;
+}
+
+/* roman numerals, set like a plate number under a gallery piece */
+.step-number {
+    font-family: var(--serif);
+    font-size: 0.95rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+/* ----------------------------------------------------------- 4. messages */
+
+.messages {
+    list-style: none;
+    margin: 0 0 var(--space-4);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.messages li {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--ink-faint);
+    border-radius: 3px;
+    background: var(--paper-raised);
+    font-size: 0.92rem;
+}
+
+.messages li.success {
+    border-left-color: var(--ok);
+    background: var(--ok-wash);
+}
+
+.messages li.info {
+    border-left-color: var(--focus);
+    background: var(--paper-raised);
+}
+
+.messages li.warning {
+    border-left-color: var(--warn);
+    background: var(--warn-wash);
+}
+
+.messages li.error {
+    border-left-color: var(--error);
+    background: var(--error-wash);
+}
+
+/* ------------------------------------------------------ 5. buttons + links */
+
+a {
+    color: var(--accent);
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1px;
+}
+
+a:hover {
+    color: var(--accent-deep);
+}
+
+/* Scoped to .site-main so the nav's logout button is never caught by it.
+   Avoids `:not(.nav-form button)`: a complex selector inside :not() is
+   Selectors-4, and if a browser rejects it the whole list dies, taking .btn
+   with it. Buttons needing a different look override this later in the file,
+   with at least (0,1,1) specificity to beat it. */
+.btn,
+.site-main button[type="submit"],
+.btn-quiet {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.65rem 1.4rem;
+    border-radius: 2px;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper-raised);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn:hover,
+.site-main button[type="submit"]:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+/* secondary action: outline only */
+.btn-quiet {
+    background: none;
+    color: var(--ink);
+    border-color: var(--rule-strong);
+}
+
+.btn-quiet:hover {
+    background: none;
+    border-color: var(--ink);
+    color: var(--ink);
+}
+
+/* destructive confirmation; compound selector to outrank the generic rule */
+.btn-danger,
+button.btn-danger {
+    background: var(--error);
+    border-color: var(--error);
+    color: #fff;
+}
+
+.btn-danger:hover,
+button.btn-danger:hover {
+    background: #8c2f23;
+    border-color: #8c2f23;
+    color: #fff;
+}
+
+/* a plain text link sitting among buttons */
+.link-quiet {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    text-decoration: underline;
+}
+
+.link-quiet:hover {
+    color: var(--ink);
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* kept in the accessibility tree but out of the visual layout: used where a
+   nearby heading already names the field */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* -------------------------------------------------------------- 6. forms */
+
+.form-shell {
+    max-width: 44rem;
+}
+
+form p {
+    max-width: none;
+    margin: 0 0 var(--space-3);
+}
+
+label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: var(--space-1);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="number"],
+input[type="file"],
+select,
+textarea {
+    width: 100%;
+    max-width: 34rem;
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    color: var(--ink);
+    /* background-color, not the `background` shorthand: the shorthand resets
+       background-image and would wipe the select chevron drawn below. */
+    background-color: var(--paper-raised);
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+    padding: 0.55rem 0.7rem;
+}
+
+/* Native selects ignore most styling, so strip the platform appearance and draw
+   the chevron ourselves as an inline SVG background. `padding-right` leaves room
+   for it; `background-color` has to be restated or the image replaces the fill. */
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 2.2rem;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%235f584e' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    cursor: pointer;
+}
+
+select:hover {
+    border-color: var(--ink-faint);
+}
+
+
+textarea {
+    line-height: 1.6;
+    resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--ink);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+fieldset {
+    border: 0;
+    border-top: 1px solid var(--rule);
+    padding: var(--space-4) 0 0;
+    margin: 0 0 var(--space-5);
+}
+
+legend {
+    font-family: var(--serif);
+    font-size: 1.4rem;
+    padding: 0 var(--space-3) 0 0;
+    color: var(--ink);
+}
+
+.helptext,
+.help-text {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    margin-top: var(--space-1);
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+}
+
+.errorlist {
+    list-style: none;
+    margin: var(--space-1) 0 0;
+    padding: 0 0 0 var(--space-2);
+    border-left: 2px solid var(--error);
+    color: var(--error);
+    font-size: 0.85rem;
+}
+
+.errorlist.nonform,
+.errorlist.nonfield {
+    margin-bottom: var(--space-3);
+}
+
+/* Focus areas, drawn as chips like the tags rather than inheriting the
+   letterspaced-caps label style, which made each option read as a heading.
+   Qualified with `div` because the widget copies its class onto every <input>
+   as well as the wrapper. */
+div.focus-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: var(--space-2);
+}
+
+div.focus-picker label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0.25rem 0.7rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    background: var(--paper-raised);
+    font-size: 0.85rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+div.focus-picker label:hover {
+    border-color: var(--ink-faint);
+}
+
+div.focus-picker > div:has(input:checked) label {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+}
+
+/* the filter bar on browse */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: var(--space-5);
+}
+
+.filter-bar p {
+    margin: 0;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    /* flex-basis rather than auto: `auto` sizes to content, and the content is
+       a <select> whose intrinsic width is its longest <option>. Tag names run to
+       50 characters, which is wider than a phone. */
+    flex: 1 1 11rem;
+    min-width: 0;
+}
+
+.filter-field select {
+    width: 100%;
+    /* the cap is what stops a long option dictating the page width */
+    max-width: 14rem;
+    min-width: 0;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.9rem;
+}
+
+.filter-check {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink);
+    margin: 0 0 0.45rem;
+}
+
+.filter-bar button[type="submit"] {
+    padding: 0.45rem 1.1rem;
+    font-size: 0.75rem;
+}
+
+/* -------------------------------------------------------- 7. tag picker */
+
+.tag-picker {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+}
+
+/* one category: Medium / Technique / Subject */
+.tag-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.tag-group-label {
+    flex: 0 0 100%;
+    margin: 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+/* one tag, drawn as a chip; the checkbox stays visible inside it */
+.tag-option label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0.25rem 0.7rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    background: var(--paper-raised);
+    font-size: 0.85rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink);
+    line-height: 1.5;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.tag-option label:hover {
+    border-color: var(--ink-faint);
+}
+
+/* :has() lets each chip react to its own checkbox with no JavaScript.
+   Without :has() support the chips stay unfilled but still work. */
+.tag-option:has(input:checked) label {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--paper-raised);
+}
+
+/* the "N more" disclosure holding the least-used tags in a category */
+.tag-overflow {
+    flex: 0 0 100%;
+}
+
+/* `display: inline-block` drops the default disclosure triangle, so the toggle
+   needs its own affordance or it reads as inert text. */
+.tag-overflow > summary {
+    display: inline-block;
+    padding: 0.15rem 0.3rem;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    cursor: pointer;
+    border-radius: 2px;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+    list-style: none;
+}
+
+.tag-overflow > summary::-webkit-details-marker {
+    display: none;
+}
+
+.tag-overflow > summary::before {
+    content: '+ ';
+    text-decoration: none;
+}
+
+.tag-overflow[open] > summary::before {
+    content: '– ';
+}
+
+.tag-overflow > summary:hover {
+    color: var(--accent);
+}
+
+.tag-overflow-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: var(--space-2) 0 0.15rem;
+}
+
+/* the medium text box and its Add button, kept on one line */
+.medium-entry {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: stretch;
+}
+
+.medium-entry input {
+    max-width: 18rem;
+}
+
+.medium-entry .medium-entry-add {
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    background: var(--ink);
+    color: var(--paper-raised);
+    cursor: pointer;
+}
+
+.medium-entry .medium-entry-add:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+/* confirmation after pressing Add, so the outcome is never a guess */
+.medium-note {
+    max-width: 34rem;
+    margin: var(--space-2) 0 0;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    font-size: 0.88rem;
+}
+
+.medium-note-existing {
+    border-left: 3px solid var(--ok);
+    background: var(--ok-wash);
+}
+
+.medium-note-new {
+    border-left: 3px solid var(--focus);
+    background: var(--paper-raised);
+}
+
+/* "did you mean?" prompt when a typed medium resembles an existing tag */
+.medium-suggestions {
+    max-width: 34rem;
+    margin: var(--space-3) 0 0;
+    padding: var(--space-3);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--warn);
+    border-radius: 2px;
+    background: var(--warn-wash);
+}
+
+.medium-suggestions > p {
+    margin: 0 0 var(--space-2);
+    font-size: 0.88rem;
+}
+
+.medium-suggestion-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.medium-suggestion-actions button {
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    padding: 0.28rem 0.8rem;
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--paper-raised);
+    cursor: pointer;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.medium-suggestion-actions button:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.medium-suggestion-confirm {
+    margin: var(--space-2) 0 0;
+}
+
+/* the escape hatch stays available but visually quieter than reusing a tag */
+.medium-suggestion-confirm button {
+    font-family: var(--sans);
+    font-size: 0.83rem;
+    padding: 0.2rem 0;
+    border: 0;
+    background: none;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    cursor: pointer;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.medium-suggestion-confirm button:hover {
+    color: var(--ink);
+}
+
+/* ------------------------------------------------------- 8. browse grid */
+
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: var(--space-5) var(--space-4);
+    align-items: start;
+}
+
+.gallery-empty {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    color: var(--ink-faint);
+    padding: var(--space-5) 0;
+}
+
+.piece-frame {
+    display: block;
+    /* uniform tiles, but `contain` so no artwork is ever cropped -- the paper
+       showing around a piece reads as a mat rather than a bug */
+    aspect-ratio: 1;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    padding: var(--space-2);
+    margin-bottom: var(--space-2);
+    transition: border-color 0.15s ease;
+}
+
+.piece-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.piece:hover .piece-frame {
+    border-color: var(--rule-strong);
+}
+
+.piece-title {
+    /* the global `p`/heading measure is far wider than a gallery column */
+    max-width: 100%;
+    /* clamp so one pathological title can't make its row enormous */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    line-height: 1.25;
+    margin: 0 0 0.15rem;
+}
+
+.piece-title a {
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.piece:hover .piece-title a {
+    color: var(--accent);
+}
+
+.piece-meta {
+    max-width: 100%;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    margin: 0;
+}
+
+.piece-wants {
+    max-width: 100%;
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    margin: var(--space-1) 0 0;
+}
+
+/* ---------------------------------------------------- 9. artwork detail */
+
+.artwork-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: start;
+}
+
+@media (max-width: 860px) {
+    .artwork-layout {
+        grid-template-columns: 1fr;
+        gap: var(--space-5);
+    }
+}
+
+.artwork-plate {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    padding: var(--space-3);
+}
+
+.artwork-plate img {
+    width: 100%;
+    /* Cap the height so a tall portrait doesn't tower over the metadata column
+       and leave it stranded beside a column of empty paper. */
+    max-height: 76vh;
+    object-fit: contain;
+}
+
+.artwork-title {
+    margin-bottom: var(--space-1);
+}
+
+.artwork-byline {
+    max-width: 100%;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin-bottom: var(--space-4);
+}
+
+.artwork-description {
+    max-width: 100%;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    line-height: 1.55;
+}
+
+.tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: var(--space-3) 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tag-pill {
+    max-width: 100%;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    padding: 0.1rem 0.6rem;
+}
+
+.owner-actions {
+    display: flex;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+    font-size: 0.85rem;
+}
+
+/* the artist's brief: what they actually asked for feedback on */
+.brief {
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: var(--space-3) 0;
+    margin: var(--space-4) 0;
+}
+
+.focus-list {
+    list-style: none;
+    margin: 0 0 var(--space-2);
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.focus-list li {
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    padding: 0.1rem 0.55rem;
+}
+
+.artist-note {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin: var(--space-2) 0 0;
+}
+
+/* ---------------------------------------------------------- 10. critiques */
+
+.critique-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    margin-top: var(--space-4);
+}
+
+.critique {
+    border-top: 1px solid var(--rule);
+    padding-top: var(--space-3);
+}
+
+.critique-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+}
+
+.critique-author {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    margin: 0;
+}
+
+.critique-date {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+}
+
+.critique-section {
+    margin-bottom: var(--space-3);
+    padding-left: var(--space-3);
+    border-left: 1px solid var(--rule-strong);
+}
+
+.critique-section:last-child {
+    margin-bottom: 0;
+}
+
+.critique-section .eyebrow {
+    color: var(--accent);
+    margin-bottom: var(--space-1);
+}
+
+.critique-section p {
+    margin: 0;
+}
+
+.critique-own-actions {
+    display: flex;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+    font-size: 0.82rem;
+}
+
+/* the critique composer: one fieldset per requested focus area */
+.critique-form fieldset {
+    border-top: 1px solid var(--rule);
+    margin-bottom: var(--space-4);
+}
+
+.critique-form legend {
+    font-size: 1.3rem;
+    color: var(--accent);
+}
+
+.critique-form textarea {
+    max-width: none;
+}
+
+.composer-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+}
+
+@media (max-width: 860px) {
+    .composer-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.confirm-panel {
+    max-width: 40rem;
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--error);
+    background: var(--paper-raised);
+    padding: var(--space-4);
+}
+
+.confirm-panel img {
+    margin-bottom: var(--space-3);
+}
+
+/* ------------------------------------------------------- 11. small screens */
+
+@media (max-width: 620px) {
+    .shell {
+        padding: 0 var(--space-3);
+    }
+
+    .site-main {
+        padding: var(--space-4) 0 var(--space-5);
+    }
+
+    .gallery {
+        /* two 230px columns no longer fit once padding is accounted for */
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: var(--space-4) var(--space-3);
+    }
+
+    .filter-bar {
+        gap: var(--space-2);
+    }
+
+    /* one filter per row, each select filling exactly that row and no more */
+    .filter-field {
+        flex-basis: 100%;
+    }
+
+    .filter-field select {
+        max-width: 100%;
+    }
+
+    /* stacked buttons read better than a cramped row */
+    .actions {
+        gap: var(--space-2);
+    }
+}

@@ -39,7 +39,10 @@ class Artwork(models.Model):
     )
     # Information about the artwork, including title, description, image, medium, tags, critique status, and creation timestamp.
     title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
+    # Capped so a wall of text can't dominate the detail page. TextField
+    # max_length is form-level only (the DB column stays TEXT), which is all
+    # that's wanted here -- it also puts a `maxlength` on the textarea.
+    description = models.TextField(blank=True, max_length=1200)
     image = CloudinaryField('artwork')
     # Medium is not a field here: it lives in `tags` as Tag.category == 'medium'.
     # It used to be a free-text CharField, which duplicated the medium tags and
@@ -94,7 +97,7 @@ class CritiqueRequest(models.Model):
         related_name='critique_request',
     )
     focus_areas = models.JSONField(default=list)
-    artist_note = models.TextField(blank=True)
+    artist_note = models.TextField(blank=True, max_length=600)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

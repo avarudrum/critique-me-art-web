@@ -125,10 +125,19 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Project-level static files, mirroring how templates/ is organised.
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Where collectstatic will gather everything for deployment. Not used in
+# development, where the staticfiles app serves from STATICFILES_DIRS directly.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = 'home'
+# Browsing is behind a login, so unauthenticated visitors land here.
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'browse'
 LOGOUT_REDIRECT_URL = 'home'

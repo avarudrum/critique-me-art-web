@@ -6,6 +6,7 @@ from django.db.models import Count
 from django.template.defaultfilters import filesizeformat
 from PIL import Image, UnidentifiedImageError
 from core.constants import FOCUS_AREAS, MAX_IMAGE_BYTES
+from core.forms import NoLabelSuffixMixin
 from .models import Artwork, CritiqueRequest, Tag
 
 
@@ -133,7 +134,7 @@ class MediumEntry(forms.TextInput):
     template_name = 'artworks/widgets/medium_entry.html'
 
 
-class GroupedTagsMixin:
+class GroupedTagsMixin(NoLabelSuffixMixin):
     """Groups the `tags` checkboxes by category and handles the medium rules.
 
     Medium is not a field on Artwork -- it is whichever tags have
@@ -411,11 +412,11 @@ class ArtworkEditForm(GroupedTagsMixin, forms.ModelForm):
         }
 
 
-class CritiqueRequestForm(forms.ModelForm):
+class CritiqueRequestForm(NoLabelSuffixMixin, forms.ModelForm):
     # Overriding the default widget for focus_areas to use checkboxes instead of a multi-select dropdown.
     focus_areas = forms.MultipleChoiceField(
         choices=FOCUS_AREAS,
-        widget=forms.CheckboxSelectMultiple,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'focus-picker'}),
         help_text="What would you like feedback on?",
     )
 

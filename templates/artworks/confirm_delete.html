@@ -3,23 +3,34 @@
 {% block title %}Delete {{ artwork.title }} — Atelier{% endblock %}
 
 {% block content %}
-    <h1>Delete "{{ artwork.title }}"?</h1>
+    <div class="page-head">
+        <p class="eyebrow">Confirm</p>
+        <h1>Delete “{{ artwork.title }}”?</h1>
+    </div>
 
-    <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}" style="max-width: 400px;">
+    <div class="confirm-panel">
+        <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}" style="max-width: 320px;">
 
-    {% if critique_count %}
-        <p><strong>This will also permanently delete {{ critique_count }}
-           critique{{ critique_count|pluralize }}</strong> that
-           {{ critique_count|pluralize:"another artist,other artists" }} wrote for you.</p>
-    {% else %}
-        <p>This piece has no critiques yet.</p>
-    {% endif %}
+        {% if critique_count %}
+            <p>
+                <strong>This will also permanently delete {{ critique_count }}
+                critique{{ critique_count|pluralize }}</strong> that
+                {{ critique_count|pluralize:"another artist,other artists" }} wrote for you.
+            </p>
+        {% else %}
+            <p>This piece has no critiques yet.</p>
+        {% endif %}
 
-    <p>The image will also be removed from storage. This can't be undone.</p>
+        <p class="meta muted">
+            The image will also be removed from storage. This can't be undone.
+        </p>
 
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit">Yes, delete it</button>
-        <a href="{% url 'artwork_detail' artwork.pk %}">Cancel</a>
-    </form>
+        <form method="post">
+            {% csrf_token %}
+            <div class="actions">
+                <button type="submit" class="btn-danger">Yes, delete it</button>
+                <a class="link-quiet" href="{% url 'artwork_detail' artwork.pk %}">Cancel</a>
+            </div>
+        </form>
+    </div>
 {% endblock %}

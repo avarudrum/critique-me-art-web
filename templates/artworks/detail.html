@@ -3,75 +3,95 @@
 {% block title %}{{ artwork.title }} — Atelier{% endblock %}
 
 {% block content %}
-    <article>
-        <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}" style="max-width: 600px;">
+    <div class="artwork-layout">
+        <div class="artwork-plate">
+            <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}">
+        </div>
 
-        <h1>{{ artwork.title }}</h1>
-        <p>by {{ artwork.user.username }} · {{ artwork.medium_names|join:", " }}</p>
-
-        {% if artwork.description %}
-            <p>{{ artwork.description }}</p>
-        {% endif %}
-
-        {% if user == artwork.user %}
-            <p>
-                <a href="{% url 'edit_artwork' artwork.pk %}">Edit details</a>
-                <a href="{% url 'delete_artwork' artwork.pk %}">Delete</a>
+        <div>
+            <h1 class="artwork-title">{{ artwork.title }}</h1>
+            <p class="artwork-byline">
+                <a href="{% url 'profile' artwork.user.username %}">{{ artwork.user.username }}</a>
+                · {{ artwork.medium_names|join:", " }}
             </p>
-        {% endif %}
 
-        {% if artwork.tags.all %}
-            <p>
-                {% for tag in artwork.tags.all %}
-                    <span>{{ tag.name }}</span>
-                {% endfor %}
-            </p>
-        {% endif %}
-
-        <section>
-            <h2>Feedback requested on</h2>
-            <ul>
-                {% for area in artwork.critique_request.focus_areas %}
-                    <li>{{ area|title }}</li>
-                {% endfor %}
-            </ul>
-
-            {% if artwork.critique_request.artist_note %}
-                <p>{{ artwork.critique_request.artist_note }}</p>
+            {% if user == artwork.user %}
+                <p class="owner-actions">
+                    <a href="{% url 'edit_artwork' artwork.pk %}">Edit details</a>
+                    <a href="{% url 'delete_artwork' artwork.pk %}">Delete</a>
+                </p>
             {% endif %}
-        </section>
 
-        <section>
-            <h2>Critiques ({{ artwork.critiques.count }})</h2>
+            {% if artwork.description %}
+                <p class="artwork-description">{{ artwork.description }}</p>
+            {% endif %}
+
+            {% if artwork.tags.all %}
+                <ul class="tag-row">
+                    {% for tag in artwork.tags.all %}
+                        <li class="tag-pill">{{ tag.name }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <section class="brief">
+                <p class="eyebrow">Feedback requested on</p>
+                <ul class="focus-list">
+                    {% for area in artwork.critique_request.focus_areas %}
+                        <li>{{ area|title }}</li>
+                    {% endfor %}
+                </ul>
+
+                {% if artwork.critique_request.artist_note %}
+                    <p class="artist-note">“{{ artwork.critique_request.artist_note }}”</p>
+                {% endif %}
+            </section>
 
             {% if user.is_authenticated and user != artwork.user and artwork.critique_request %}
                 {% if already_critiqued %}
-                    <p>You've already critiqued this piece.</p>
+                    <p class="meta muted">You've already critiqued this piece.</p>
                 {% else %}
-                    <a href="{% url 'create_critique' artwork.pk %}">Leave a critique</a>
+                    <p class="actions">
+                        <a class="btn" href="{% url 'create_critique' artwork.pk %}">Leave a critique</a>
+                    </p>
                 {% endif %}
             {% endif %}
+        </div>
+    </div>
 
+    <hr class="divider">
+
+    <section>
+        <p class="eyebrow">Critiques</p>
+        <h2>{{ artwork.critiques.count }} response{{ artwork.critiques.count|pluralize }}</h2>
+
+        <div class="critique-list">
             {% for critique in artwork.critiques.all %}
-                <article>
-                    <h3>{{ critique.user.username }} · {{ critique.created_at|date:"j M Y" }}</h3>
+                <article class="critique">
+                    <div class="critique-head">
+                        <h3 class="critique-author">
+                            <a href="{% url 'profile' critique.user.username %}">{{ critique.user.username }}</a>
+                        </h3>
+                        <span class="critique-date">{{ critique.created_at|date:"j M Y" }}</span>
+                    </div>
+
                     {% for section in critique.sections.all %}
-                        <div>
-                            <strong>{{ section.get_category_display }}</strong>
+                        <div class="critique-section">
+                            <p class="eyebrow">{{ section.get_category_display }}</p>
                             <p>{{ section.body|linebreaksbr }}</p>
                         </div>
                     {% endfor %}
 
                     {% if critique.user == user %}
-                        <p>
+                        <p class="critique-own-actions">
                             <a href="{% url 'edit_critique' critique.pk %}">Edit</a>
                             <a href="{% url 'delete_critique' critique.pk %}">Delete</a>
                         </p>
                     {% endif %}
                 </article>
             {% empty %}
-                <p>No critiques yet.</p>
+                <p class="gallery-empty">No critiques yet.</p>
             {% endfor %}
-        </section>
-    </article>
+        </div>
+    </section>
 {% endblock %}

@@ -3,35 +3,51 @@
 {% block title %}Critique {{ artwork.title }} — Atelier{% endblock %}
 
 {% block content %}
-    <h1>Critique: {{ artwork.title }}</h1>
-    <p>by {{ artwork.user.username }} · {{ artwork.medium_names|join:", " }}</p>
+    <div class="page-head">
+        <p class="eyebrow">Writing a critique</p>
+        <h1>{{ artwork.title }}</h1>
+        <p class="meta">
+            {{ artwork.user.username }} · {{ artwork.medium_names|join:", " }}
+        </p>
+    </div>
 
-    <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}" style="max-width: 500px;">
+    <div class="composer-layout">
+        <div>
+            <div class="artwork-plate">
+                <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}">
+            </div>
 
-    {% if artwork.critique_request.artist_note %}
-        <blockquote>
-            <strong>The artist says:</strong>
-            {{ artwork.critique_request.artist_note }}
-        </blockquote>
-    {% endif %}
+            {% if artwork.critique_request.artist_note %}
+                <section class="brief">
+                    <p class="eyebrow">The artist says</p>
+                    <p class="artist-note">“{{ artwork.critique_request.artist_note }}”</p>
+                </section>
+            {% endif %}
+        </div>
 
-    <p>Respond to any of the areas the artist asked about. Leave the rest blank.</p>
+        <form class="critique-form" method="post">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            {{ formset.non_form_errors }}
 
-    <form method="post">
-        {% csrf_token %}
-        {{ formset.management_form }}
-        {{ formset.non_form_errors }}
+            <p class="meta muted">
+                Respond to any of the areas the artist asked about. Leave the rest blank.
+            </p>
 
-        {% for form in formset %}
-            <fieldset>
-                <legend>{{ form.category.value|title }}</legend>
-                {{ form.category }}
-                {{ form.body.label_tag }}
-                {{ form.body }}
-                {{ form.body.errors }}
-            </fieldset>
-        {% endfor %}
+            {% for form in formset %}
+                <fieldset>
+                    <legend>{{ form.category.value|title }}</legend>
+                    {{ form.category }}
+                    <span class="visually-hidden">{{ form.body.label_tag }}</span>
+                    {{ form.body }}
+                    {{ form.body.errors }}
+                </fieldset>
+            {% endfor %}
 
-        <button type="submit">Submit critique</button>
-    </form>
+            <div class="actions">
+                <button type="submit">Submit critique</button>
+                <a class="link-quiet" href="{% url 'artwork_detail' artwork.pk %}">Cancel</a>
+            </div>
+        </form>
+    </div>
 {% endblock %}

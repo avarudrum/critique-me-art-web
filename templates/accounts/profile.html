@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ person.username }} — Atelier{% endblock %}
+
+{% block content %}
+    <div class="page-head">
+        <h1>{{ person.username }}</h1>
+
+        <p class="meta">
+            {% if person.primary_medium %}Mostly {{ person.primary_medium }} · {% endif %}
+            Joined {{ person.created_at|date:"F Y" }} ·
+            {{ artwork_count }} piece{{ artwork_count|pluralize }} ·
+            {{ critique_count }} critique{{ critique_count|pluralize }} written
+        </p>
+
+        {% if person.bio %}
+            <p class="artwork-description">{{ person.bio }}</p>
+        {% elif is_self %}
+            <p class="meta muted">
+                You haven't written a bio yet.
+            </p>
+        {% endif %}
+
+        {% if is_self %}
+            <p class="owner-actions">
+                <a href="{% url 'edit_profile' %}">Edit profile</a>
+                <a href="{% url 'upload_artwork' %}">Upload new work</a>
+            </p>
+        {% endif %}
+    </div>
+
+    <hr class="divider">
+
+    <section>
+        <p class="eyebrow">Work</p>
+        <h2>{{ artwork_count }} piece{{ artwork_count|pluralize }}</h2>
+
+        <div class="gallery">
+            {% for artwork in artworks %}
+                <article class="piece">
+                    <a class="piece-frame" href="{% url 'artwork_detail' artwork.pk %}">
+                        <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}">
+                    </a>
+                    <h3 class="piece-title">
+                        <a href="{% url 'artwork_detail' artwork.pk %}">{{ artwork.title }}</a>
+                    </h3>
+                    <p class="piece-meta">{{ artwork.medium_names|join:", " }}</p>
+                    <p class="piece-wants">
+                        {{ artwork.critiques.count }} critique{{ artwork.critiques.count|pluralize }}
+                    </p>
+                </article>
+            {% empty %}
+                <p class="gallery-empty">
+                    {% if is_self %}
+                        You haven't posted any work yet.
+                    {% else %}
+                        {{ person.username }} hasn't posted any work yet.
+                    {% endif %}
+                </p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <hr class="divider">
+
+    <section>
+        <p class="eyebrow">Critiques written</p>
+        <h2>{{ critique_count }} response{{ critique_count|pluralize }}</h2>
+
+        <div class="critique-list">
+            {% for critique in critiques %}
+                <article class="critique">
+                    <div class="critique-head">
+                        <h3 class="critique-author">
+                            <a href="{% url 'artwork_detail' critique.artwork.pk %}">{{ critique.artwork.title }}</a>
+                        </h3>
+                        <span class="critique-date">
+                            by {{ critique.artwork.user.username }} · {{ critique.created_at|date:"j M Y" }}
+                        </span>
+                    </div>
+
+                    {% for section in critique.sections.all %}
+                        <div class="critique-section">
+                            <p class="eyebrow">{{ section.get_category_display }}</p>
+                            <p>{{ section.body|linebreaksbr }}</p>
+                        </div>
+                    {% endfor %}
+                </article>
+            {% empty %}
+                <p class="gallery-empty">
+                    {% if is_self %}
+                        You haven't critiqued anything yet.
+                    {% else %}
+                        {{ person.username }} hasn't critiqued anything yet.
+                    {% endif %}
+                </p>
+            {% endfor %}
+        </div>
+    </section>
+{% endblock %}

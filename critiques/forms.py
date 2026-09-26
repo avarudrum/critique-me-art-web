@@ -1,7 +1,9 @@
 from django import forms
 
+from core.forms import NoLabelSuffixMixin
 
-class CritiqueSectionForm(forms.Form):
+
+class CritiqueSectionForm(NoLabelSuffixMixin, forms.Form):
     category = forms.CharField(widget=forms.HiddenInput())
     body = forms.CharField(
         label='Your feedback',

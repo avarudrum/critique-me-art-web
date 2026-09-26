@@ -3,58 +3,68 @@
 {% block title %}Browse — Atelier{% endblock %}
 
 {% block content %}
-    <h1>Browse work</h1>
+    <div class="page-head">
+        <h1>Browse</h1>
+        {# placeholder -- Ava is writing the real line #}
+        <p class="lede">Work posted for critique.</p>
+    </div>
 
-    <form method="get">
-        <label for="medium">Medium</label>
-        <select name="medium" id="medium">
-            <option value="">All</option>
-            {% for m in mediums %}
-                <option value="{{ m.id }}" {% if m.id|stringformat:"s" == selected_medium %}selected{% endif %}>
-                    {{ m.name }}
-                </option>
-            {% endfor %}
-        </select>
+    <form class="filter-bar" method="get">
+        <div class="filter-field">
+            <label for="medium">Medium</label>
+            <select name="medium" id="medium">
+                <option value="">All</option>
+                {% for m in mediums %}
+                    <option value="{{ m.id }}" {% if m.id|stringformat:"s" == selected_medium %}selected{% endif %}>
+                        {{ m.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <label for="tag">Tag</label>
-        <select name="tag" id="tag">
-            <option value="">All</option>
-            {% for tag in tags %}
-                <option value="{{ tag.id }}" {% if tag.id|stringformat:"s" == selected_tag %}selected{% endif %}>
-                    {{ tag.name }}
-                </option>
-            {% endfor %}
-        </select>
+        <div class="filter-field">
+            <label for="tag">Tag</label>
+            <select name="tag" id="tag">
+                <option value="">All</option>
+                {% for tag in tags %}
+                    <option value="{{ tag.id }}" {% if tag.id|stringformat:"s" == selected_tag %}selected{% endif %}>
+                        {{ tag.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <label>
+        <label class="filter-check">
             <input type="checkbox" name="needs_critique" value="1"
                    {% if needs_critique %}checked{% endif %}>
             Needs critique
         </label>
 
         <button type="submit">Filter</button>
-        <a href="{% url 'browse' %}">Clear</a>
+        <a class="link-quiet" href="{% url 'browse' %}">Clear</a>
     </form>
 
-    <div>
+    <div class="gallery">
         {% for artwork in artworks %}
-            <article>
-                <a href="{% url 'artwork_detail' artwork.pk %}">
-                    <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}"
-                         style="max-width: 240px;">
+            <article class="piece">
+                <a class="piece-frame" href="{% url 'artwork_detail' artwork.pk %}">
+                    <img src="{{ artwork.image.url }}" alt="{{ artwork.title }}">
                 </a>
-                <h2>
+                <h2 class="piece-title">
                     <a href="{% url 'artwork_detail' artwork.pk %}">{{ artwork.title }}</a>
                 </h2>
-                <p>{{ artwork.user.username }} · {{ artwork.medium_names|join:", " }}</p>
+                <p class="piece-meta">
+                    <a href="{% url 'profile' artwork.user.username %}">{{ artwork.user.username }}</a>
+                    · {{ artwork.medium_names|join:", " }}
+                </p>
                 {% if artwork.critique_request.focus_areas %}
-                    <p>Wants feedback on:
-                        {{ artwork.critique_request.focus_areas|join:", " }}
+                    <p class="piece-wants">
+                        Wants feedback on {{ artwork.critique_request.focus_areas|join:", " }}
                     </p>
                 {% endif %}
             </article>
         {% empty %}
-            <p>No work matches those filters.</p>
+            <p class="gallery-empty">No work matches those filters.</p>
         {% endfor %}
     </div>
 {% endblock %}

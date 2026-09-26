@@ -7,3 +7,5 @@ db.sqlite3
 seed_images/
 CLAUDE.MD
 ~/seed.py
+# collectstatic output (generated at deploy time)
+staticfiles/
