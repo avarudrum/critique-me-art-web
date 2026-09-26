@@ -56,6 +56,7 @@ Seeded accounts: gracie_m, haley_s, sana_k, terry_lb. Password: seedpass123
 - **Critics may answer any subset of the requested areas**, but at least one. Enforced in `BaseCritiqueSectionFormSet.clean()`. Blank sections aren't saved.
 - **Artists can't critique their own work.** Checked in the view.
 - **Browsing is behind a login.** `browse` and `artwork_detail` are `@login_required`, and the nav only offers them to members. `/` is the public landing page and the only thing a visitor sees. `LOGIN_URL`/`LOGIN_REDIRECT_URL` send them to browse once they're in, and `?next=` returns them to whatever they were trying to reach.
+- **Logging out says so.** `LogoutWithNoticeView` adds the message *after* `super().dispatch()`: `auth_logout()` calls `session.flush()`, so anything queued beforehand is discarded with the old session. Every other action in the app confirms itself; logout shouldn't be the exception.
 - **Signing up logs you straight in.** `SignUpView.form_valid()` calls `login()` — they just chose the password, so making them retype it is friction with nothing behind it.
 - **Profiles live at `/artist/<username>/`, wired in `config/urls.py`.** Deliberately *not* under `accounts/`: a `<str:username>` route there would shadow Django's own `accounts/logout/` and `accounts/password_reset/`. Readable by any member, not just the owner — seeing what someone has written before is how you judge their critique.
 - **`bio` and `primary_medium` finally have a UI** (`ProfileForm`, `/accounts/settings/`). They had been on the model since the start but were admin-only, so a profile page would have rendered permanently empty.
@@ -136,6 +137,11 @@ loudest thing on screen.
 
 ## Gotchas already hit
 
+- **Tests that save an `Artwork` with a real file upload hit your real Cloudinary account.** `CloudinaryField` uploads when the model is *saved*, not when the form validates, and Django's test database being throwaway doesn't help: dropping it never touches Cloudinary. Test scripts leaked tiny red-square PNGs into the Media Library this way. When writing the real test suite, give artworks a string public id (`image='fake_id'`) instead of a file, or patch `cloudinary.uploader.upload`. Related: the `post_delete` cleanup signal also fires in tests, calling `cloudinary.uploader.destroy` on whatever id the artwork has — harmless for a fake id, but it does reach the network.
+- Django escapes apostrophes to `&#x27;` in rendered output, so asserting on a
+  message's raw text (`You're logged out`) fails even when the page is correct.
+  Check `response.context['messages']` for content and match the escaped form in
+  HTML.
 - Headless Chrome clamps `--window-size` to a **500px minimum width**. Asking for
   390 renders at 500 and crops, which looks exactly like a layout bug. Measure
   overflow by comparing `documentElement.scrollWidth` to `window.innerWidth`

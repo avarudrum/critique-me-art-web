@@ -20,6 +20,13 @@ urlpatterns = [
         auth_views.LoginView.as_view(authentication_form=LoginForm),
         name='login',
     ),
+    # Same reason as the login override: declared first so it wins over the
+    # stock LogoutView from the include below.
+    path(
+        'accounts/logout/',
+        account_views.LogoutWithNoticeView.as_view(),
+        name='logout',
+    ),
     path('accounts/', include('django.contrib.auth.urls')),
     path('critiques/', include('critiques.urls')),
 ]   

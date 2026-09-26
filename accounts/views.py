@@ -3,6 +3,7 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.contrib.auth.views import LogoutView
 from django.views.generic import CreateView
 
 from artworks.models import Artwork
@@ -28,6 +29,22 @@ class SignUpView(CreateView):
             self.request,
             f"Welcome to Atelier, {self.object.username}.",
         )
+        return response
+
+
+class LogoutWithNoticeView(LogoutView):
+    """Logout that actually says it logged you out.
+
+    The message has to be added *after* super() runs. `auth_logout()` calls
+    `session.flush()`, so anything queued beforehand is thrown away with the old
+    session; adding it afterwards writes into the fresh one.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        was_signed_in = request.user.is_authenticated
+        response = super().dispatch(request, *args, **kwargs)
+        if was_signed_in:
+            messages.success(request, "You're logged out. See you next time.")
         return response
 
 
