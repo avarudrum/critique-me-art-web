@@ -15,6 +15,7 @@
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
+        {% include 'artworks/_medium_suggestions.html' %}
         <button type="submit">Save changes</button>
         <a href="{% url 'artwork_detail' artwork.pk %}">Cancel</a>
     </form>

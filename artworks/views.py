@@ -50,13 +50,42 @@ def browse(request):
         'needs_critique': needs_critique,
     })
 
+def _announce_medium_outcome(request, form):
+    """Say what happened to a typed medium once the artwork is actually saved.
+
+    Reusing an existing tag used to be completely silent, so an artist could not
+    tell whether their medium had registered, or whether they had just created a
+    near-duplicate of something that already existed.
+    """
+    if not form.medium_outcome:
+        return
+
+    kind, tag = form.medium_outcome
+    if kind == 'created':
+        messages.success(request, f'Added "{tag.name}" as a new medium tag.')
+    else:
+        messages.info(request, f'"{tag.name}" already existed, so it was reused.')
+
+
 @login_required
 def upload_artwork(request):
     if request.method == 'POST':
         artwork_form = ArtworkForm(request.POST, request.FILES)
         request_form = CritiqueRequestForm(request.POST)
 
-        if artwork_form.is_valid() and request_form.is_valid():
+        if artwork_form.is_interim_submit:
+            # A medium-box button, not an attempt to post. Run cleaning so the
+            # notice and any suggestions are populated, then fall through to
+            # re-render. The critique form is rebuilt unbound from the same data
+            # so the artist keeps their answers without being shown errors for a
+            # form they haven't finished yet.
+            artwork_form.errors  # noqa: B018 -- forces cleaning
+            request_form = CritiqueRequestForm(initial={
+                'focus_areas': request.POST.getlist('focus_areas'),
+                'artist_note': request.POST.get('artist_note', ''),
+            })
+
+        elif artwork_form.is_valid() and request_form.is_valid():
             # Save the artwork and critique request, associating them with the logged-in user.
             artwork = artwork_form.save(commit=False)
             artwork.user = request.user
@@ -67,6 +96,7 @@ def upload_artwork(request):
             critique_request.artwork = artwork
             critique_request.save()
 
+            _announce_medium_outcome(request, artwork_form)
             return redirect('artwork_detail', pk=artwork.pk)
     else:
         artwork_form = ArtworkForm()
@@ -105,8 +135,12 @@ def edit_artwork(request, pk):
 
     if request.method == 'POST':
         form = ArtworkEditForm(request.POST, instance=artwork)
-        if form.is_valid():
+        if form.is_interim_submit:
+            # A medium-box button: refresh the form rather than saving.
+            form.errors  # noqa: B018 -- forces cleaning so the notice populates
+        elif form.is_valid():
             form.save()
+            _announce_medium_outcome(request, form)
             messages.success(request, "Your artwork details have been updated.")
             return redirect('artwork_detail', pk=artwork.pk)
     else:

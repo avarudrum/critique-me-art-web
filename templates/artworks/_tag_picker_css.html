@@ -90,4 +90,105 @@ Temporary home -- move this into a real stylesheet when static files get set up.
         gap: 0.4rem;
         padding: 0.5rem 0 0.15rem;
     }
+
+    /* the medium text box and its Add button, kept on one line */
+    .medium-entry {
+        display: inline-flex;
+        gap: 0.4rem;
+        align-items: stretch;
+    }
+
+    .medium-entry input {
+        padding: 0.3rem 0.5rem;
+    }
+
+    .medium-entry-add {
+        padding: 0.3rem 0.9rem;
+        border: 1px solid #2b2b2b;
+        border-radius: 4px;
+        background: #2b2b2b;
+        color: #fff;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    .medium-entry-add:hover {
+        background: #000;
+    }
+
+    /* confirmation after pressing Add, so the outcome is never a guess */
+    .medium-note {
+        margin: 0.5rem 0 0;
+        padding: 0.5rem 0.7rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+    /* reused an existing tag */
+    .medium-note-existing {
+        border: 1px solid #bcd8bd;
+        border-left: 3px solid #4a8a4f;
+        background: #f1f8f1;
+    }
+
+    /* staged a brand-new tag */
+    .medium-note-new {
+        border: 1px solid #c2d4e8;
+        border-left: 3px solid #3b6ea5;
+        background: #f0f5fb;
+    }
+
+    /* "did you mean?" prompt shown when a typed medium resembles an existing tag */
+    .medium-suggestions {
+        margin: 0.75rem 0;
+        padding: 0.75rem 0.9rem;
+        border: 1px solid #e0cfa0;
+        border-left: 3px solid #b8912f;
+        border-radius: 4px;
+        background: #fdf8ec;
+    }
+
+    .medium-suggestions > p {
+        margin: 0 0 0.6rem;
+        font-size: 0.9rem;
+    }
+
+    .medium-suggestion-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .medium-suggestion-actions button {
+        padding: 0.3rem 0.7rem;
+        border: 1px solid #2b2b2b;
+        border-radius: 999px;
+        background: #2b2b2b;
+        color: #fff;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    .medium-suggestion-actions button:hover {
+        background: #000;
+    }
+
+    .medium-suggestion-confirm {
+        margin: 0.6rem 0 0;
+    }
+
+    /* the escape hatch stays available but visually quieter than reusing a tag */
+    .medium-suggestion-confirm button {
+        padding: 0.2rem 0.4rem;
+        border: 0;
+        background: none;
+        color: #6b5a2b;
+        font-size: 0.85rem;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    .medium-suggestion-confirm button:hover {
+        color: #000;
+    }
 </style>

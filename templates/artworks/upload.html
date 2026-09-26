@@ -13,6 +13,7 @@
         <fieldset>
             <legend>The work</legend>
             {{ artwork_form.as_p }}
+            {% include 'artworks/_medium_suggestions.html' with form=artwork_form %}
         </fieldset>
 
         <fieldset>

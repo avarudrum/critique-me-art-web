@@ -1,0 +1,50 @@
+{% comment %}
+Inline feedback for the medium box. Expects `form` in context.
+
+Three states, at most one of which shows at a time:
+  * `medium_notice` ('selected', tag) -- the typed medium already existed and has
+    been ticked for them;
+  * `medium_notice` ('pending', name) -- genuinely new, will be created on save;
+  * `medium_suggestions` -- it resembles existing tags, so ask before creating.
+
+Every action is a plain submit button, so none of this needs JavaScript.
+{% endcomment %}
+
+{% if form.medium_notice %}
+    {% with kind=form.medium_notice.0 subject=form.medium_notice.1 %}
+        {% if kind == 'selected' %}
+            <p class="medium-note medium-note-existing">
+                “{{ subject.name }}” is already a medium — ticked it for you above.
+                No new tag needed.
+            </p>
+        {% else %}
+            <p class="medium-note medium-note-new">
+                “{{ subject }}” is new. It will be created as a medium tag when you
+                save this artwork.
+            </p>
+        {% endif %}
+    {% endwith %}
+{% endif %}
+
+{% if form.medium_suggestions %}
+    <div class="medium-suggestions">
+        <p>
+            Did you mean one of these? Reusing an existing tag keeps work
+            filterable and stops near-duplicates piling up.
+        </p>
+
+        <p class="medium-suggestion-actions">
+            {% for tag in form.medium_suggestions %}
+                <button type="submit" name="use_existing_tag" value="{{ tag.pk }}">
+                    Use “{{ tag.name }}”
+                </button>
+            {% endfor %}
+        </p>
+
+        <p class="medium-suggestion-confirm">
+            <button type="submit" name="confirm_new_medium" value="1">
+                No, add “{{ form.attempted_medium }}” as a new medium
+            </button>
+        </p>
+    </div>
+{% endif %}

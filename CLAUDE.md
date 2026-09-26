@@ -66,6 +66,15 @@ Seeded accounts: gracie_m, haley_s, sana_k, terry_lb. Password: seedpass123
 - **The tag picker is never paginated.** `GroupedTagSelect` hides a category's long tail behind a `<details>` instead. Collapsed options stay in the DOM, so a ticked box inside one still submits — paging would split one form across requests and silently drop selections made on a page the user navigated away from. Two knobs: `visible_per_group = 8` and `min_overflow = 3` (don't collapse a tail so short that the toggle costs more than it saves). In practice nothing collapses until a category has 11 tags.
 - **Usage decides which tags are visible, alphabet decides their order.** `grouped_tag_choices()` orders by `Count('artworks')` so the least-used tags fall into the overflow; `GroupedTagSelect.get_context()` then re-sorts each half by name so chips don't shuffle around as counts change.
 - **A `<details>` renders `open` when it hides a ticked box** (`overflow_has_selection`), so someone editing an artwork can always see every tag they chose.
+- **New tags are checked for near-duplicates before they are created.** `similar_tags()` runs two passes: `difflib.get_close_matches` at cutoff 0.8 for close spellings ('watercolor' → 'watercolour', 'charcole' → 'charcoal'), then per-word prefix overlap for multi-word names difflib scores too low ('pastel' vs 'oil pastel' is only 0.75, 'oils' vs 'oil paint' 0.46). The second pass compares against each *word* of the existing name rather than using `in`, so 'ink' matches 'acrylic ink' without also matching 'linework', and it needs 3 characters to start since 2-letter prefixes match far too much.
+- **The "did you mean" prompt is a hard stop, not a warning.** A soft warning would still create the duplicate, which defeats the point. The artist either clicks a suggestion or explicitly confirms. Both are plain submit buttons (`use_existing_tag`, `confirm_new_medium`), so the flow needs no JavaScript.
+- **The medium box has its own Add button** (`MediumEntry` widget, `add_medium`). A bare text field gave no sign anything had happened — the artist typed a medium and only found out on save whether it was reused or created. Making it a widget rather than template markup means `as_p` still renders the field normally and the button comes along with it.
+- **Every medium-box button is an *interim* submit** (`INTERIM_BUTTONS`): it updates the form and re-renders, and only the form's own submit button saves. `is_valid()` returns False for an interim press whatever else is true, so nothing can save from one — important, because `full_clean()` prunes unrelated errors for display and pruning does *not* put anything back into `cleaned_data`, so a caller trusting a pruned-to-empty error dict would blow up in `save_m2m()`.
+- **On an interim press the views re-render without saving** and rebuild `CritiqueRequestForm` *unbound from the same POST data*, so the artist keeps their focus areas and note without being shown errors for a form they haven't finished. They trigger cleaning by touching `form.errors`, not `is_valid()`, since the latter is now always False there.
+- **Both outcomes are announced.** Inline while editing (`medium_notice`: 'selected' = ticked an existing tag, 'pending' = will be created on save) and again after saving via Django messages (`medium_outcome`: 'reused' / 'created'). Reusing an existing tag used to be entirely silent, which left artists unsure whether their medium had registered at all.
+- **Nothing is created on an Add press**, only on save. Typing a brand-new medium and abandoning the form still leaves no orphan tag.
+- **`use_existing_tag` is folded into the submitted data in `__init__`**, before any cleaning, so the rest of the form behaves as if the artist had ticked the box themselves. The id is not trusted — it goes through `tags`, which validates against the queryset. `_select_suggested_tag()` reads through the widget and writes with `setlist` or `[]` depending on the copy, because `request.POST` is an immutable multi-value QueryDict while a plain dict is also valid form input.
+- **An exact (case-insensitive) match short-circuits before suggestions**, so typing an existing medium in any casing just reuses it silently.
 - **Medium is a tag, not a field.** `Artwork.medium` (free-text CharField) was removed in migration `0002`. It duplicated the medium-category tags on every artwork and produced one-off values like `'graphite and charcoal'` that polluted the browse dropdown. Medium is now whichever tags have `category == 'medium'`.
 - **An artwork may have several mediums, but needs at least one.** Enforced in `GroupedTagsMixin.clean()`, not the database, so the browse filter stays complete. Multiple mediums are the point: 'Reaching out' is graphite *and* charcoal.
 - **`new_medium` is a free-text escape hatch, medium only.** An artist whose medium isn't listed types it and it becomes a `Tag(category='medium')`. Technique and subject stay a curated list so they don't fill with near-duplicates.
@@ -111,17 +120,33 @@ and medium folded into tags (migration `0002`, drops `Artwork.medium`).
 
 ### Tag growth plan
 
-Step 1 is built (overflow disclosure, above). Remaining steps, in order, to be
-done only when the tag list actually justifies them:
+Steps 1 and 2 are built (overflow disclosure and "did you mean", both above).
+Remaining steps, to be done only when the tag list actually justifies them:
 
-2. **"Did you mean?" on tag creation** — when someone types a near-match of an
-   existing tag, offer the existing one with a one-click swap. Do this *before*
-   opening free-text input to technique and subject, not after. Display is the
-   symptom; uncontrolled creation is the disease. 6 of 23 tags already have zero
-   artworks, and casing is already inconsistent (`Underpainting`, `Impressionism`).
 3. **Filter box** — ~15 lines of vanilla JS hiding non-matching chips as you type.
    Worth it once a category realistically passes ~30. Everything stays in the DOM,
    so selections are still safe.
 4. Server-side autocomplete via HTMX only matters at thousands of tags.
+
+Open items on the tag work:
+
+- **Free-text creation is still medium-only.** Extending it to technique and
+  subject means generalising `new_medium` into a per-category field; `similar_tags()`
+  already takes a `category` argument for exactly that.
+- **Casing is normalised only on lookup, not on write.** `Underpainting` and
+  `Impressionism` are still stored capitalised while everything else is lowercase.
+  A `Tag.save()` that lowercases would fix it going forward, plus a one-off data
+  migration for what's there.
+- **Unused tags are never pruned.** `Tag.objects.annotate(n=Count('artworks')).filter(n=0)`
+  is the report; whether to auto-hide or delete them is a product call.
+- **Any validation error on upload loses the chosen image**, because browsers
+  won't repopulate a file input. The medium box's Add button and the "did you
+  mean" prompt both add round trips that hit this. Inherent to non-JS file
+  inputs — HTMX is the real fix, and this is the strongest argument for adding it.
+- **Enter in any text field triggers Add**, because browsers submit via the first
+  submit button in DOM order and `MediumEntry` renders one mid-form. Harmless (an
+  interim press preserves input and shows no spurious errors) and it gives the
+  medium box the Enter-to-add behaviour it wants, but it is why the main submit
+  button cannot simply be moved earlier in the markup.
 
 Out of scope for now: guides/lessons, following, feeds, notifications, reputation, revision threads.

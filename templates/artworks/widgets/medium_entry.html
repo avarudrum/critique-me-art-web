@@ -1,0 +1,13 @@
+{% comment %}
+Template for MediumEntry: the medium text box plus its Add button.
+
+The button is a normal submit named `add_medium`, which the form treats as an
+interim press -- it resolves the typed name and re-renders, rather than posting
+the artwork. No JavaScript involved.
+{% endcomment %}
+<span class="medium-entry">
+    <input type="{{ widget.type }}" name="{{ widget.name }}"
+           {% if widget.value != None %}value="{{ widget.value|stringformat:'s' }}"{% endif %}
+           {% include "django/forms/widgets/attrs.html" %}>
+    <button type="submit" name="add_medium" value="1" class="medium-entry-add">Add</button>
+</span>
