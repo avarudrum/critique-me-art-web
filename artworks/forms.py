@@ -193,7 +193,6 @@ class GroupedTagsMixin(NoLabelSuffixMixin):
             required=False,
             max_length=50,
             label='Medium not listed? Add it',
-            help_text='Type it, then press Add.',
             widget=MediumEntry(attrs={'placeholder': 'e.g. gouache'}),
         )
 
@@ -426,8 +425,9 @@ class CritiqueRequestForm(NoLabelSuffixMixin, forms.ModelForm):
     # Overriding the default widget for focus_areas to use checkboxes instead of a multi-select dropdown.
     focus_areas = forms.MultipleChoiceField(
         choices=FOCUS_AREAS,
+        # No help_text: the fieldset note above already says to select the areas
+        # you want feedback on, so a hint here was the same sentence twice.
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'focus-picker'}),
-        help_text="What would you like feedback on?",
     )
 
     class Meta:

@@ -268,7 +268,12 @@ img {
     margin-bottom: var(--space-5);
 }
 
+/* Smaller than the global h1, which is sized for the landing page's one-line
+   statement. An interior page's heading names where you are -- it is a label,
+   not the loudest thing on the page, and at 3.1rem it was competing with the
+   work and the form under it. `.lede-block h1` keeps the hero size. */
 .page-head h1 {
+    font-size: clamp(1.8rem, 3.2vw, 2.4rem);
     margin-bottom: var(--space-2);
 }
 
@@ -663,6 +668,28 @@ form p {
     margin: 0 0 var(--space-3);
 }
 
+/* `as_p` wraps every field in a <p>, but a <p> may only hold phrasing content
+   and both the tag picker and the focus picker render a <div> full of
+   <details>. The parser therefore closes the <p> at the <div>, and the
+   template's own </p> arrives with no <p> open -- which the HTML spec says to
+   treat as an empty <p>, so one is silently inserted into the flow. Two real
+   consequences, both measured rather than spotted:
+     1. a zero-height <p> after each of those two widgets;
+     2. the label is left alone in its own <p>, so it sits var(--space-3) above
+        its widget while every other label -- sharing a <p> with its input --
+        sits at label's own var(--space-1). A 12px inconsistency on two of six
+        fields, which is exactly the size that reads as sloppy without being
+        obvious enough to find by eye.
+   Fixing it structurally means giving up as_p (as_div renders valid markup);
+   until then these two rules make the rhythm even. */
+form p:empty {
+    display: none;
+}
+
+form p:has(> label:only-child) {
+    margin-bottom: var(--space-1);
+}
+
 label {
     display: block;
     font-size: 0.8rem;
@@ -692,6 +719,42 @@ textarea {
     border: 1px solid var(--rule-strong);
     border-radius: 2px;
     padding: 0.55rem 0.7rem;
+}
+
+/* The file input's button, unlike a <select>'s popup, is a real element CSS can
+   reach: ::file-selector-button is supported in every current browser (Chrome
+   89+, Firefox 82+, Safari 16.4+), so this is not the <select> situation. Only
+   the picker *dialog* stays the operating system's, which is correct -- that is
+   the OS file browser, not part of the page. The "no file chosen" text beside
+   the button is drawn by the browser; its colour inherits, but the wording
+   cannot be changed or removed without JavaScript. */
+input[type="file"] {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    padding: 0.4rem 0.45rem;
+    cursor: pointer;
+}
+
+input[type="file"]::file-selector-button {
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    margin-right: 0.8rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+input[type="file"]:hover::file-selector-button {
+    background: var(--accent-wash);
+    border-color: var(--accent);
+    color: var(--accent-deep);
 }
 
 /* Native selects ignore most styling, so strip the platform appearance and draw
@@ -820,11 +883,15 @@ fieldset {
     margin: 0 0 var(--space-5);
 }
 
+/* Sienna, matching the critique composer's legends, which were already accent:
+   a fieldset name labels the hairline above it rather than being read as prose,
+   so it can take the accent without competing with the fields below. Short line,
+   which is the condition for accent colour anywhere on the site. */
 legend {
     font-family: var(--serif);
     font-size: 1.4rem;
     padding: 0 var(--space-3) 0 0;
-    color: var(--ink);
+    color: var(--accent);
 }
 
 /* the sentence under a legend saying what the fieldset is for -- serif, like
@@ -873,6 +940,8 @@ div.focus-picker {
     flex-wrap: wrap;
     gap: 0.4rem;
     margin-top: var(--space-2);
+    /* as with .tag-picker, the following field is this div's sibling */
+    margin-bottom: var(--space-3);
 }
 
 div.focus-picker label {
@@ -1082,11 +1151,15 @@ div.focus-picker > div:has(input:checked) label {
 
 /* -------------------------------------------------------- 7. tag picker */
 
+/* Both margins are the widget's own, because the <p> as_p wrapped it in is
+   closed by the parser before it gets here (see the `form p:empty` note): the
+   field below is a sibling of this div, not of a <p> carrying the rhythm. */
 .tag-picker {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
     margin-top: var(--space-2);
+    margin-bottom: var(--space-3);
 }
 
 /* One category -- Medium / Technique / Subject -- collapsed behind its own
@@ -1783,9 +1856,9 @@ summary.critique-head::after {
     margin-bottom: var(--space-4);
 }
 
+/* colour now comes from the base `legend` rule; only the size differs here */
 .critique-form legend {
     font-size: 1.3rem;
-    color: var(--accent);
 }
 
 .critique-form textarea {

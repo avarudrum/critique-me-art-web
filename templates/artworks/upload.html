@@ -4,6 +4,7 @@
 
 {% block content %}
     <div class="page-head">
+        <p class="eyebrow">New work</p>
         <h1>Upload a new piece.</h1>
     </div>
 
@@ -15,13 +16,23 @@
     <form class="form-shell" method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
+        {% comment %}
+            Both fieldsets are labelled. The first one used to have only the
+            hairline its border-top draws, which put an unexplained rule under
+            the headline while the second group had a name -- the two halves of
+            one form looked like different kinds of thing.
+        {% endcomment %}
         <fieldset>
+            <legend>Details</legend>
+            <p class="fieldset-note">
+                Describe your process and medium.
+            </p>
             {{ artwork_form.as_p }}
             {% include 'artworks/_medium_suggestions.html' with form=artwork_form %}
         </fieldset>
 
         <fieldset>
-            <legend>Feedback Specification</legend>
+            <legend>Request</legend>
             <p class="fieldset-note">
                 Select the areas you want feedback on. Outline your process and thoughts.
             </p>
