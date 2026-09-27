@@ -29,7 +29,7 @@ class ProfileForm(NoLabelSuffixMixin, forms.ModelForm):
     class Meta:
         model = User
         fields = ('bio', 'primary_medium')
-        labels = {'primary_medium': 'What you mostly work in'}
+        labels = {'primary_medium': 'Primary medium'}
         widgets = {
             'bio': forms.Textarea(attrs={
                 'rows': 4,

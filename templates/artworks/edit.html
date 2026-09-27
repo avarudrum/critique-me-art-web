@@ -17,11 +17,6 @@
 
         <form method="post">
             {% csrf_token %}
-            <p class="meta muted">
-                Text and tags are yours to change. The image and the areas you
-                asked about stay put — critiques already answer those.
-            </p>
-
             {{ form.as_p }}
             {% include 'artworks/_medium_suggestions.html' %}
 
