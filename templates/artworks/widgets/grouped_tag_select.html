@@ -1,35 +1,58 @@
 {% comment %}
-Template for GroupedTagSelect. One block per tag category, with the least-used
-tags tucked into a <details> once a category passes the threshold.
+Template for GroupedTagSelect. One collapsible category per block -- Medium,
+Technique, Subject -- each holding its chips, with the least-used tags still
+tucked into the inner "N more" disclosure once a category passes the threshold.
 
-Everything stays inside the form, including collapsed options, so a ticked box
-in the overflow still submits.
+Collapsing the categories keeps the upload form short, but it also hides what
+you have ticked, which matters here in a way it does not on the browse filters:
+picking tags *is* the task on this page, and at least one medium is required.
+So the closed toggle always names its own selection. Nothing is hidden from the
+form itself -- every checkbox stays in the DOM, collapsed or not, so it submits
+either way.
+
+The shared `name` makes the categories exclusive. Without it, opening a second
+category would drop its floating panel on top of the one already open.
 {% endcomment %}
 <div class="tag-picker"{% if widget.attrs.id %} id="{{ widget.attrs.id }}"{% endif %}>
     {% for group in widget.groups %}
-        <div class="tag-group">
-            {% if group.label %}
-                <p class="tag-group-label">{{ group.label }}</p>
-            {% endif %}
+        {% comment %}
+            Three readouts, one shown at a time by CSS :has(). The names come
+            from the server, so they are right on load and after every round
+            trip -- editing an artwork, the medium Add button, a failed
+            validation. What the server cannot know is a box ticked since the
+            page rendered, and a toggle still reading "None chosen" over a
+            ticked box would undermine the whole reason for showing a summary.
+            :has() picks the honest one of the three with no JavaScript.
+        {% endcomment %}
+        <details class="dropdown tag-dropdown{% if group.selected_labels %} has-saved-selection{% endif %}"
+                 name="tag-category">
+            <summary class="dropdown-toggle tag-dropdown-toggle">
+                <span class="tag-dropdown-label">{{ group.label }}</span>
+                <span class="tag-dropdown-value">{{ group.selected_labels|join:", " }}</span>
+                <span class="tag-dropdown-none">None</span>
+                <span class="tag-dropdown-some">Selected</span>
+            </summary>
 
-            {% for option in group.visible %}
-                <div class="tag-option">
-                    {% include option.template_name with widget=option %}
-                </div>
-            {% endfor %}
-
-            {% if group.overflow %}
-                <details class="tag-overflow"{% if group.overflow_has_selection %} open{% endif %}>
-                    <summary>{{ group.overflow|length }} more</summary>
-                    <div class="tag-overflow-options">
-                        {% for option in group.overflow %}
-                            <div class="tag-option">
-                                {% include option.template_name with widget=option %}
-                            </div>
-                        {% endfor %}
+            <div class="dropdown-panel tag-dropdown-panel">
+                {% for option in group.visible %}
+                    <div class="tag-option">
+                        {% include option.template_name with widget=option %}
                     </div>
-                </details>
-            {% endif %}
-        </div>
+                {% endfor %}
+
+                {% if group.overflow %}
+                    <details class="tag-overflow"{% if group.overflow_has_selection %} open{% endif %}>
+                        <summary>{{ group.overflow|length }} more</summary>
+                        <div class="tag-overflow-options">
+                            {% for option in group.overflow %}
+                                <div class="tag-option">
+                                    {% include option.template_name with widget=option %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </details>
+                {% endif %}
+            </div>
+        </details>
     {% endfor %}
 </div>

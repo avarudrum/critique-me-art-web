@@ -133,6 +133,16 @@ img {
     color: var(--ink-soft);
 }
 
+/* A modifier for a lede that is a short line rather than a sentence: set it
+   smaller and in the accent, the way the landing page sets its tagline. Only
+   for slogans -- an explanatory paragraph in sienna italic is too much colour,
+   which is why this is opt-in and not a change to .lede itself. */
+.lede-accent {
+    font-size: clamp(1rem, 1.5vw, 1.15rem);
+    font-style: italic;
+    color: var(--accent);
+}
+
 .meta {
     font-size: 0.85rem;
     color: var(--ink-soft);
@@ -325,20 +335,29 @@ img {
 }
 
 /* the dictionary entry, set as two aligned columns rather than a tinted box */
+/* The term and its definition are set at different sizes, so aligning their
+   tops (the .grid-2 default) leaves their baselines 2px apart -- just enough to
+   read as a mistake. Grid can align the row by first baseline instead, which is
+   what a dictionary entry wants and what survives any later size change. */
 .definition {
+    align-items: baseline;
     margin-bottom: 0;
 }
 
 .definition dt {
     font-family: var(--serif);
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     font-style: italic;
-    line-height: 1.3;
+    line-height: 1.4;
 }
 
+/* Inline after the term rather than stacked under it. Stacked, it gave the
+   left column a second line the right column did not have, so the block hung
+   19px lower on one side than the other -- the awkwardness in an otherwise
+   two-line entry. Inline, both sides are one line and the block reads flat. */
 .definition-say {
-    display: block;
-    margin-top: 0.15rem;
+    display: inline;
+    margin-left: 0.55rem;
     font-family: var(--sans);
     font-style: normal;
     font-size: 0.7rem;
@@ -351,9 +370,26 @@ img {
 .definition dd {
     margin: 0;
     font-family: var(--serif);
-    font-size: 1.15rem;
-    line-height: 1.45;
+    font-size: 1.05rem;
+    line-height: 1.5;
     color: var(--ink-soft);
+}
+
+/* The heading over the specimen. It spans the block rather than sitting in the
+   artwork column, which is only 0.8fr wide -- a sentence in there would wrap to
+   four lines and break the column edge the page is built on. */
+.specimen-heading {
+    margin: 0 0 var(--space-4);
+    max-width: 30rem;
+    /* italic serif in the soft ink, like the tagline and the artist notes --
+       a quiet line introducing the specimen rather than a section shout */
+    font-size: clamp(1.1rem, 2vw, 1.35rem);
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.35;
+    letter-spacing: 0;
+    /* the same sienna as the tagline in the hero */
+    color: var(--accent);
 }
 
 /* the specimen: same two columns as the definition above it */
@@ -676,6 +712,93 @@ select:hover {
     border-color: var(--ink-faint);
 }
 
+/* The open dropdown list.
+   Everything above styles the *closed* control only. The popup a native
+   <select> opens is drawn by the operating system, not by CSS, which is why it
+   has always looked like a system menu sitting on top of a gallery wall.
+   `appearance: base-select` is the standard that hands that popup to CSS. It
+   needs no JavaScript. Browsers without it ignore the whole block and keep the
+   native popup, which is exactly what they render today -- so this is additive,
+   never a regression. */
+@supports (appearance: base-select) {
+    select,
+    ::picker(select) {
+        appearance: base-select;
+    }
+
+    /* base-select draws its own arrow via ::picker-icon, so the hand-drawn SVG
+       chevron above would be a second one. Drop it and restate the padding it
+       was reserving room for. */
+    select {
+        background-image: none;
+        padding-right: 0.7rem;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        text-align: left;
+    }
+
+    /* base-select's own arrow is a chunky filled triangle, which is not the
+       line-drawn chevron the rest of the site uses. Swap the glyph for the same
+       SVG the fallback draws, so both paths look identical. */
+    select::picker-icon {
+        content: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23948c80' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        margin-left: auto;
+        transition: transform 120ms ease;
+    }
+
+    select:open::picker-icon {
+        transform: rotate(180deg);
+    }
+
+    /* the panel: paper, a hairline, and enough air that it reads as part of the
+       page rather than a menu dropped on top of it */
+    ::picker(select) {
+        border: 1px solid var(--rule-strong);
+        border-radius: 2px;
+        background-color: var(--paper-raised);
+        padding: var(--space-1) 0;
+        margin-top: 0.3rem;
+        box-shadow: 0 6px 24px rgb(28 26 23 / 0.09);
+        max-height: 19rem;
+        overflow-y: auto;
+    }
+
+    option {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: 0.4rem 0.7rem;
+        font-family: var(--sans);
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        background-color: transparent;
+        cursor: pointer;
+    }
+
+    /* :hover is the mouse, :focus the arrow keys -- both must show, or keyboard
+       navigation moves an invisible cursor down the list. */
+    option:hover,
+    option:focus {
+        background-color: var(--accent-wash);
+        color: var(--ink);
+        outline: none;
+    }
+
+    option:checked {
+        color: var(--accent);
+    }
+
+    /* base-select puts a checkmark on the selected option. A tick and a colour
+       change say the same thing twice, so keep the tick's space reserved to stop
+       the labels shifting, and let the colour do the work. */
+    option::checkmark {
+        content: '';
+        width: 0.45rem;
+        color: var(--accent);
+    }
+}
+
 
 textarea {
     line-height: 1.6;
@@ -702,6 +825,18 @@ legend {
     font-size: 1.4rem;
     padding: 0 var(--space-3) 0 0;
     color: var(--ink);
+}
+
+/* the sentence under a legend saying what the fieldset is for -- serif, like
+   every other piece of prose on the site, so it reads as a caption rather than
+   as another form label */
+.fieldset-note {
+    margin: calc(var(--space-2) * -1) 0 var(--space-4);
+    max-width: 34rem;
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    line-height: 1.45;
+    color: var(--ink-soft);
 }
 
 .helptext,
@@ -784,40 +919,165 @@ div.focus-picker > div:has(input:checked) label {
 }
 
 .filter-field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    /* flex-basis rather than auto: `auto` sizes to content, and the content is
-       a <select> whose intrinsic width is its longest <option>. Tag names run to
-       50 characters, which is wider than a phone. */
+    /* flex-basis rather than auto: `auto` sizes to content, and a tag name runs
+       to 50 characters, which is wider than a phone. */
     flex: 1 1 11rem;
     min-width: 0;
-}
-
-.filter-field select {
-    width: 100%;
-    /* the cap is what stops a long option dictating the page width */
     max-width: 14rem;
-    min-width: 0;
-    padding: 0.4rem 0.5rem;
-    font-size: 0.9rem;
 }
 
-.filter-check {
+.filter-legend {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+/* THE FILTER DROPDOWNS
+   A <select> hands its open list to the operating system to draw, so outside
+   Chrome it cannot be styled at all -- it renders as a platform menu sitting on
+   a gallery wall. These are a <details> and a stack of links instead: ordinary
+   elements, so every browser draws them the same, and still no JavaScript.
+   Choosing an option navigates, which both applies the filter and closes the
+   panel. */
+.dropdown {
+    position: relative;
+}
+
+/* the closed control, drawn to match the site's inputs */
+.dropdown-toggle {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    letter-spacing: 0;
-    text-transform: none;
+    gap: var(--space-2);
+    padding: 0.4rem 0.5rem;
+    font-family: var(--sans);
+    font-size: 0.9rem;
     color: var(--ink);
-    margin: 0 0 0.45rem;
+    background-color: var(--paper-raised);
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+    cursor: pointer;
+    /* Both are needed: Safari uses the -webkit- marker, everyone else the
+       list-style. Miss either and a stray disclosure triangle appears next to
+       the chevron. */
+    list-style: none;
 }
 
-.filter-bar button[type="submit"] {
-    padding: 0.45rem 1.1rem;
-    font-size: 0.75rem;
+.dropdown-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.dropdown-toggle > span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* the chevron, the same one the site's selects draw */
+.dropdown-toggle::after {
+    content: '';
+    flex: none;
+    margin-left: auto;
+    width: 10px;
+    height: 7px;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23948c80' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    transition: transform 120ms ease;
+}
+
+.dropdown[open] .dropdown-toggle::after {
+    transform: rotate(180deg);
+}
+
+.dropdown-toggle:hover {
+    border-color: var(--ink-faint);
+}
+
+.dropdown-toggle:focus-visible {
+    border-color: var(--ink);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+/* The panel floats rather than pushing the gallery down -- a filter bar that
+   shoves the whole page about every time it opens is unusable. z-index is
+   required: without it the panel paints under the artwork tiles that follow it
+   in source order. */
+.dropdown-panel {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 0.3rem);
+    left: 0;
+    min-width: 100%;
+    max-width: 18rem;
+    max-height: 19rem;
+    overflow-y: auto;
+    padding: var(--space-1) 0;
+    background-color: var(--paper-raised);
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+    box-shadow: 0 6px 24px rgb(28 26 23 / 0.09);
+}
+
+.dropdown-option {
+    display: block;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.9rem;
+    line-height: 1.35;
+    color: var(--ink-soft);
+    text-decoration: none;
+    border: 0;
+}
+
+/* :focus-visible as well as :hover, or arrow-key and Tab users move an
+   invisible cursor down the list */
+.dropdown-option:hover,
+.dropdown-option:focus-visible {
+    background-color: var(--accent-wash);
+    color: var(--ink);
+    outline: none;
+    text-decoration: none;
+}
+
+.dropdown-option.is-selected {
+    color: var(--accent);
+}
+
+/* 'Needs critique', as a toggle rather than a checkbox, so every filter in the
+   bar applies the same way: one click. */
+.filter-toggle {
+    align-self: end;
+    padding: 0.4rem 0.75rem;
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    text-decoration: none;
+    background-color: var(--paper-raised);
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+    white-space: nowrap;
+}
+
+.filter-toggle:hover {
+    border-color: var(--ink-faint);
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.filter-toggle.is-on {
+    color: #fff;
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.filter-clear {
+    align-self: end;
+    padding-block: 0.4rem;
+    font-size: 0.85rem;
 }
 
 /* -------------------------------------------------------- 7. tag picker */
@@ -829,21 +1089,76 @@ div.focus-picker > div:has(input:checked) label {
     margin-top: var(--space-2);
 }
 
-/* one category: Medium / Technique / Subject */
-.tag-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
+/* One category -- Medium / Technique / Subject -- collapsed behind its own
+   toggle, reusing the .dropdown pattern the browse filters use. The toggle
+   carries the category name on the left and its current selection on the
+   right, because a collapsed category that does not say what is inside it
+   hides the artist's own choice from them. */
+.tag-dropdown {
+    max-width: 26rem;
 }
 
-.tag-group-label {
-    flex: 0 0 100%;
-    margin: 0;
+.tag-dropdown-toggle {
+    justify-content: flex-start;
+}
+
+.tag-dropdown-label {
+    flex: none;
     font-size: 0.7rem;
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--ink-faint);
+}
+
+/* The selection, which is the part worth reading, so it gets the ink. All
+   three readouts are hidden by default and :has() reveals exactly one, so the
+   toggle can never claim "None chosen" over a box that is currently ticked. */
+.tag-dropdown-value,
+.tag-dropdown-none,
+.tag-dropdown-some {
+    display: none;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.85rem;
+    color: var(--ink);
+}
+
+/* the server rendered names, and something is still ticked */
+.tag-dropdown.has-saved-selection:has(input:checked) .tag-dropdown-value {
+    display: block;
+}
+
+/* ticked since the page loaded, so there are no server-rendered names to show */
+.tag-dropdown:not(.has-saved-selection):has(input:checked) .tag-dropdown-some {
+    display: block;
+    color: var(--accent);
+}
+
+/* nothing ticked, whatever the server rendered */
+.tag-dropdown:not(:has(input:checked)) .tag-dropdown-none {
+    display: block;
+    color: var(--ink-faint);
+}
+
+/* Chips wrap inside the panel; .dropdown-panel supplies the paper, hairline
+   and scrolling.
+
+   Unlike the browse filters, this panel sits in the flow and pushes the rest of
+   the form down instead of floating over it. The filters sit side by side, so a
+   floating panel covers nothing; these three are stacked, so a floating Medium
+   panel lands squarely on top of the Technique and Subject toggles and you
+   cannot reach them without closing Medium first. Measured: a click aimed at
+   the second toggle hit the open panel instead. */
+.tag-dropdown-panel {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+    padding: var(--space-2);
+    box-shadow: none;
 }
 
 /* one tag, drawn as a chip; the checkbox stays visible inside it */
@@ -1107,11 +1422,36 @@ div.focus-picker > div:has(input:checked) label {
     margin: 0;
 }
 
+/* Still used by the profile tiles for their critique count, even though browse
+   now shows tag chips instead. */
 .piece-wants {
     max-width: 100%;
     font-size: 0.78rem;
     color: var(--ink-faint);
     margin: var(--space-1) 0 0;
+}
+
+/* Tags on a browse tile, drawn as the same chip the tag picker uses so the two
+   read as one vocabulary. Static text, not checkboxes, so the chip styling is
+   restated here rather than shared -- .tag-option label carries checkbox
+   layout and hover states that mean nothing on a tile. */
+.piece-tags {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    max-width: 100%;
+}
+
+.piece-tags li {
+    padding: 0.1rem 0.5rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
 }
 
 /* ---------------------------------------------------- 9. artwork detail */
@@ -1204,24 +1544,131 @@ div.focus-picker > div:has(input:checked) label {
     gap: 0.4rem;
 }
 
+/* The areas the artist asked about -- the single most important thing on the
+   page, since it is what a critic is meant to answer. It used to be 0.8rem
+   sienna text on paper, which is the lowest-contrast pairing in the palette and
+   read as a footnote. Filled instead: paper on sienna clears contrast easily at
+   this size, and it is the same filled-accent chip the focus picker and the
+   browse toggle already use, so it introduces nothing new. */
 .focus-list li {
-    font-size: 0.8rem;
-    letter-spacing: 0.04em;
-    color: var(--accent);
+    font-size: 0.9rem;
+    letter-spacing: 0.01em;
+    color: var(--paper-raised);
+    background-color: var(--accent);
     border: 1px solid var(--accent);
     border-radius: 2px;
-    padding: 0.1rem 0.55rem;
+    padding: 0.2rem 0.7rem;
 }
 
+/* Upright, not italic. This is the artist's actual question -- the thing a
+   critic most needs to read -- and a run of italic serif is the hardest text
+   on the site to read at length. The quote marks in the template already mark
+   it as their words, so the italic was carrying no meaning the page lost. */
 .artist-note {
     font-family: var(--serif);
     font-size: 1.05rem;
-    font-style: italic;
+    font-style: normal;
     color: var(--ink-soft);
     margin: var(--space-2) 0 0;
 }
 
 /* ---------------------------------------------------------- 10. critiques */
+
+/* A section heading whose label leads and whose tally trails it, small. */
+.section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    /* space-4 rather than space-2: the count is a separate piece of
+       information, not part of the heading, and needs the air to read that way */
+    gap: var(--space-4);
+    margin: 0 0 var(--space-2);
+    font-size: clamp(1.25rem, 2.2vw, 1.5rem);
+    font-weight: 400;
+}
+
+.section-count {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+/* CHOOSING AREAS BEFORE WRITING
+   One wrapping flex row holding the prompt, the chips and the boxes. `order`
+   pulls every chip above every box, so the markup can keep each checkbox
+   beside the box it controls -- which is what lets the reveal below work at
+   all, since CSS cannot look backwards from a box to an earlier checkbox. */
+.area-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.area-prompt {
+    order: 0;
+    flex: 0 0 100%;
+    margin: 0;
+}
+
+.area-chip {
+    order: 1;
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 0.25rem 0.7rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    background-color: var(--paper-raised);
+    font-size: 0.85rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink);
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.area-chip:hover {
+    border-color: var(--ink-faint);
+}
+
+/* the checkbox is off-screen but still focusable, so the ring has to be drawn
+   on the chip instead -- same trick as the landing page slideshow */
+.area-toggle:focus-visible + .area-chip {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.area-toggle:checked + .area-chip {
+    border-color: var(--accent);
+    background-color: var(--accent);
+    color: var(--paper-raised);
+}
+
+.area-field {
+    order: 2;
+    flex: 0 0 100%;
+    display: none;
+    margin-top: var(--space-3);
+}
+
+/* One pair per area. Five is the ceiling by design -- one section per area and
+   five areas in core.constants.FOCUS_AREAS -- the same bounded-list approach
+   the landing page slideshow uses. CSS has no previous-sibling combinator, so
+   :has() on the container plus a matching id is what connects a chip to its
+   box. Adding a sixth focus area means adding a sixth pair here. */
+.area-form:has(#area0:checked) #areafield0,
+.area-form:has(#area1:checked) #areafield1,
+.area-form:has(#area2:checked) #areafield2,
+.area-form:has(#area3:checked) #areafield3,
+.area-form:has(#area4:checked) #areafield4 {
+    display: block;
+}
 
 .critique-list {
     display: flex;
@@ -1252,6 +1699,56 @@ div.focus-picker > div:has(input:checked) label {
 .critique-date {
     font-size: 0.78rem;
     color: var(--ink-faint);
+}
+
+/* Everything below is scoped to summary.critique-head, not .critique-head. The
+   profile page reuses the same class on a plain <div> that does not open, and
+   an unscoped chevron would put a dropdown arrow on something that is not one. */
+summary.critique-head {
+    cursor: pointer;
+    margin-bottom: 0;
+    /* both, or a stray disclosure triangle shows up beside the chevron:
+       -webkit- for Safari, list-style for everyone else */
+    list-style: none;
+}
+
+summary.critique-head::-webkit-details-marker {
+    display: none;
+}
+
+.critique[open] > summary.critique-head {
+    margin-bottom: var(--space-3);
+}
+
+summary.critique-head:hover .critique-author {
+    color: var(--accent);
+}
+
+/* which areas this critic answered -- the reason to open one thread over
+   another, so it sits in the summary rather than only inside */
+.critique-areas {
+    font-size: 0.8rem;
+    color: var(--accent);
+}
+
+/* pushed right so the dates line up down the thread */
+summary.critique-head .critique-date {
+    margin-left: auto;
+}
+
+/* the chevron, matching the filter and tag dropdowns */
+summary.critique-head::after {
+    content: '';
+    flex: none;
+    width: 10px;
+    height: 7px;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23948c80' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    transition: transform 120ms ease;
+}
+
+.critique[open] > summary.critique-head::after {
+    transform: rotate(180deg);
 }
 
 .critique-section {
@@ -1341,12 +1838,15 @@ div.focus-picker > div:has(input:checked) label {
         gap: var(--space-2);
     }
 
-    /* one filter per row, each select filling exactly that row and no more */
+    /* one filter per row, each control filling exactly that row and no more */
     .filter-field {
         flex-basis: 100%;
+        max-width: 100%;
     }
 
-    .filter-field select {
+    /* the panel matches the control rather than the 18rem cap, which would
+       overhang the screen edge on a phone */
+    .dropdown-panel {
         max-width: 100%;
     }
 

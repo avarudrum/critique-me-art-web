@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Sum
+from django.db.models import Count, Prefetch, Sum
 from django.db.models.functions import Length
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import ArtworkForm, ArtworkEditForm, CritiqueRequestForm
@@ -73,15 +73,45 @@ def browse(request):
         .order_by('name')
     )
 
+    tags = Tag.objects.exclude(category=Tag.MEDIUM).order_by('category', 'name')
+
+    # The filter dropdowns are custom markup rather than <select>s, so nothing
+    # renders the chosen option's label for us -- the closed toggle has to show
+    # it itself. Resolved from the lists already fetched above, in Python, so
+    # this costs no extra query.
+    selected_medium_name = _selected_name(mediums, medium_id)
+    selected_tag_name = _selected_name(tags, tag_id)
+
     return render(request, 'artworks/browse.html', {
         'artworks': artworks,
         # Mediums have their own dropdown now, so leave them out of this one.
-        'tags': Tag.objects.exclude(category=Tag.MEDIUM).order_by('category', 'name'),
+        'tags': tags,
         'mediums': mediums,
         'selected_medium': medium_id,
         'selected_tag': tag_id,
+        'selected_medium_name': selected_medium_name,
+        'selected_tag_name': selected_tag_name,
         'needs_critique': needs_critique,
     })
+
+
+def _selected_name(tags, raw_id):
+    """The name of the tag whose id is `raw_id`, or None.
+
+    Iterates the queryset rather than calling .get(): both lists are evaluated
+    for the dropdowns anyway, so this reads the result cache instead of adding
+    a query. An id that matches nothing (a hand-edited URL, or a tag deleted
+    since the link was made) falls through to None and the toggle reads 'All',
+    which matches what the filter itself does with it.
+    """
+    if not raw_id.isdigit():
+        return None
+
+    for tag in tags:
+        if tag.id == int(raw_id):
+            return tag.name
+
+    return None
 
 def _announce_medium_outcome(request, form):
     """Say what happened to a typed medium once the artwork is actually saved.
@@ -142,8 +172,16 @@ def upload_artwork(request):
 
 @login_required
 def artwork_detail(request, pk):
+    # select_related('user') on the critiques, not just their sections: the
+    # thread renders every critic's username, which was one query per critique.
     artwork = get_object_or_404(
-        Artwork.objects.prefetch_related('critiques__sections', 'tags'),
+        Artwork.objects.prefetch_related(
+            Prefetch(
+                'critiques',
+                queryset=Critique.objects.select_related('user').prefetch_related('sections'),
+            ),
+            'tags',
+        ),
         pk=pk,
     )
     # Lets the template hide the "Leave a critique" link instead of offering a

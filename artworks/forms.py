@@ -113,6 +113,16 @@ class GroupedTagSelect(forms.CheckboxSelectMultiple):
                 # Open the disclosure when it hides a ticked box, so someone
                 # editing an artwork can always see every tag they have chosen.
                 'overflow_has_selection': any(option['selected'] for option in tail),
+                # Each category is collapsed behind its own toggle, so the
+                # toggle has to name what is ticked inside it -- otherwise
+                # closing it hides the choice you just made, on the one screen
+                # where choosing is the whole task. Read off every option in the
+                # category, visible and overflow alike, in the order shown.
+                'selected_labels': [
+                    option['label']
+                    for option in sorted(options, key=by_name)
+                    if option['selected']
+                ],
             })
 
         context['widget']['groups'] = groups

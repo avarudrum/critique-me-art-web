@@ -32,8 +32,16 @@
     <hr class="divider">
 
     <section>
-        <p class="eyebrow">Work</p>
-        <h2>{{ artwork_count }} piece{{ artwork_count|pluralize }}</h2>
+        {% comment %}
+            The label leads and the count follows it, rather than the count
+            being the heading. An <h2> still carries the section name for the
+            document outline; the tally is supporting detail, so it is set small
+            beside it instead of being the biggest thing in the section.
+        {% endcomment %}
+        <h2 class="section-head">
+            Work
+            <span class="section-count">{{ artwork_count }} piece{{ artwork_count|pluralize }}</span>
+        </h2>
 
         <div class="gallery">
             {% for artwork in artworks %}
@@ -64,8 +72,11 @@
     <hr class="divider">
 
     <section>
-        <p class="eyebrow">Critiques written</p>
-        <h2>{{ critique_count }} response{{ critique_count|pluralize }}</h2>
+        {# same treatment, or the two sections on this page disagree #}
+        <h2 class="section-head">
+            Critiques written
+            <span class="section-count">{{ critique_count }} response{{ critique_count|pluralize }}</span>
+        </h2>
 
         <div class="critique-list">
             {% for critique in critiques %}

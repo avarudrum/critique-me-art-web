@@ -10,7 +10,7 @@ class CritiqueSectionForm(NoLabelSuffixMixin, forms.Form):
         required=False,
         widget=forms.Textarea(attrs={
             'rows': 5,
-            'placeholder': 'Describe what you see before you suggest changes.',
+            'placeholder': 'Remember to keep your critique constructive, relevant, and kind.',
         }),
     )
 

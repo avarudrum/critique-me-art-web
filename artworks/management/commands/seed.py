@@ -19,6 +19,8 @@ USERS = [
     ('haley_s', 'haley_s@example.com', 'Graphite and Charcoal artist working on contrast.', 'charcoal'),
     ('sana_k', 'sana@example.com', 'Digital abstract artist exploring texture.', 'digital'),
     ('terry_lb', 'terry@example.com', 'Beginner 3D sculptor.', '3D modeling'),
+    ('ava.rudrum', 'ava.rudrum@example.com', 'Acrylic and oil pastel painter.', 'acrylic paint'),
+    ('fellow.artist', 'fellow.artist@example.com', 'Painter and critic.', 'oil pastel'),
 ]
 
 TAGS = [
@@ -43,6 +45,25 @@ TAGS = [
 ]
 
 ARTWORKS = [
+    # The landing page picks its specimen by substance -- most areas answered,
+    # then longest -- so this one is listed with all five focus areas and given
+    # a five-section critique below. That is the ceiling (one section per area,
+    # five areas in core.constants.FOCUS_AREAS), so nothing can outrank it, and
+    # the front page shows this piece rather than whatever happened to be
+    # critiqued most thoroughly.
+    #
+    # 'artist' and 'critic' are optional. Without them the artist is assigned by
+    # position and the critic at random, which is fine for filler but cannot put
+    # a named pair on the front page.
+    {
+        'title': 'the programmer',
+        'image': 'the_programmer.jpg',
+        'artist': 'ava.rudrum',
+        'description': 'Acrylic and oil pastel interior, painted from life.',
+        'tags': ['acrylic paint', 'oil pastel', 'portrait'],
+        'focus_areas': ['composition', 'color', 'technique', 'concept', 'perspective'],
+        'artist_note': 'Painted from my own room. I want to know whether the mood carries.',
+    },
     {
         'title': 'Busking',
         'image': 'mix-media_1.jpg',
@@ -105,6 +126,22 @@ CRITIQUE_BODIES = {
     # Each artwork maps to a list of critiques, one per critic.
     # Each critique maps a focus area to that critic's written feedback.
     # Add another {...} block to a list to give that piece a second critic.
+    #
+    # A '_critic' key names the author instead of drawing one at random. Any
+    # other key is a focus area.
+
+    # PLACEHOLDER TEXT -- these five bodies are filler so the sections exist and
+    # this piece wins the landing-page pick. Replace them with the real critique.
+    'the programmer': [
+        {
+            '_critic': 'fellow.artist',
+            'composition': "Placeholder feedback on composition.",
+            'color': "Placeholder feedback on color.",
+            'technique': "Placeholder feedback on technique.",
+            'concept': "Placeholder feedback on concept.",
+            'perspective': "Placeholder feedback on perspective.",
+        },
+    ],
     'Busking': [
         {
             'composition': "The composition is balanced and the subject is clearly the focus of the piece. That said, you're right that it reads flat. The shadow side of the figure is close in value to the background, so there's nothing separating the two. Deepening just the contact shadow where the figure meets the ground would do more than deepening the shadow overall.",
@@ -213,12 +250,15 @@ class Command(BaseCommand):
         return tags
 
     def create_artworks(self, users, tags):
+        by_username = {user.username: user for user in users}
         created = []
         for index, data in enumerate(ARTWORKS):
             if Artwork.objects.filter(title=data['title']).exists():
                 continue
 
-            artist = users[index % len(users)]
+            # A named artist wins; otherwise fall back to the positional
+            # round-robin, which is fine for filler pieces.
+            artist = by_username.get(data.get('artist')) or users[index % len(users)]
 
             image_path = os.path.join(SEED_IMAGE_DIR, data['image'])
             if not os.path.exists(image_path):
@@ -253,15 +293,22 @@ class Command(BaseCommand):
         return created
 
     def create_critiques(self, users, artworks):
+        by_username = {user.username: user for user in users}
         count = 0
         for artwork in artworks:
             written = CRITIQUE_BODIES.get(artwork.title, [])
-            critics = [u for u in users if u != artwork.user]
-            random.shuffle(critics)
+            pool = [u for u in users if u != artwork.user]
+            random.shuffle(pool)
 
-            # zip pairs each written critique with a different critic,
-            # and stops when either list runs out.
-            for critic, sections in zip(critics, written):
+            for sections in written:
+                # '_critic' names the author; otherwise take the next one from
+                # the shuffled pool. Popping only for unnamed critiques keeps a
+                # named author from using up somebody else's slot.
+                named = by_username.get(sections.get('_critic'))
+                critic = named or (pool.pop() if pool else None)
+                if critic is None or critic == artwork.user:
+                    continue
+
                 if Critique.objects.filter(artwork=artwork, user=critic).exists():
                     continue
 

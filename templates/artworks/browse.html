@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load query_params %}
 
 {% block title %}Browse — Atelier{% endblock %}
 
@@ -6,43 +7,77 @@
     <div class="page-head">
         <h1>Browse</h1>
         {# placeholder -- Ava is writing the real line #}
-        <p class="lede">Work posted for critique.</p>
+        <p class="lede lede-accent">Give feedback. Get feedback.</p>
     </div>
 
-    <form class="filter-bar" method="get">
+    {% comment %}
+        These filters are links, not a <form>. A <select> hands its open list to
+        the operating system to draw, which is why it could never match the rest
+        of the site outside Chrome. A <details> is ordinary markup we style
+        ourselves, and it looks identical in every browser.
+
+        Because each option is a link, choosing one applies the filter straight
+        away and closes the panel by navigating -- no JavaScript, and no Filter
+        button to press afterwards. query_replace carries the other filters
+        along, so the two dropdowns still combine.
+
+        The shared `name="filters"` makes the group exclusive: opening one
+        closes the other. Browsers without that behaviour just allow both open,
+        which is untidy rather than broken.
+    {% endcomment %}
+    <div class="filter-bar">
         <div class="filter-field">
-            <label for="medium">Medium</label>
-            <select name="medium" id="medium">
-                <option value="">All</option>
-                {% for m in mediums %}
-                    <option value="{{ m.id }}" {% if m.id|stringformat:"s" == selected_medium %}selected{% endif %}>
-                        {{ m.name }}
-                    </option>
-                {% endfor %}
-            </select>
+            <span class="filter-legend" id="medium-label">Medium</span>
+            <details class="dropdown" name="filters">
+                {% comment %}
+                    Both ids, in order: a lone aria-labelledby would *replace*
+                    the summary's own text, so it would announce "Medium" and
+                    never say which medium is actually selected.
+                {% endcomment %}
+                <summary class="dropdown-toggle"
+                         aria-labelledby="medium-label medium-value">
+                    <span id="medium-value">{{ selected_medium_name|default:"All" }}</span>
+                </summary>
+                <div class="dropdown-panel">
+                    <a class="dropdown-option {% if not selected_medium_name %}is-selected{% endif %}"
+                       href="{% query_replace medium='' %}">All</a>
+                    {% for m in mediums %}
+                        <a class="dropdown-option {% if m.id|stringformat:"s" == selected_medium %}is-selected{% endif %}"
+                           href="{% query_replace medium=m.id %}">{{ m.name }}</a>
+                    {% endfor %}
+                </div>
+            </details>
         </div>
 
         <div class="filter-field">
-            <label for="tag">Tag</label>
-            <select name="tag" id="tag">
-                <option value="">All</option>
-                {% for tag in tags %}
-                    <option value="{{ tag.id }}" {% if tag.id|stringformat:"s" == selected_tag %}selected{% endif %}>
-                        {{ tag.name }}
-                    </option>
-                {% endfor %}
-            </select>
+            <span class="filter-legend" id="tag-label">Tag</span>
+            <details class="dropdown" name="filters">
+                <summary class="dropdown-toggle"
+                         aria-labelledby="tag-label tag-value">
+                    <span id="tag-value">{{ selected_tag_name|default:"All" }}</span>
+                </summary>
+                <div class="dropdown-panel">
+                    <a class="dropdown-option {% if not selected_tag_name %}is-selected{% endif %}"
+                       href="{% query_replace tag='' %}">All</a>
+                    {% for tag in tags %}
+                        <a class="dropdown-option {% if tag.id|stringformat:"s" == selected_tag %}is-selected{% endif %}"
+                           href="{% query_replace tag=tag.id %}">{{ tag.name }}</a>
+                    {% endfor %}
+                </div>
+            </details>
         </div>
 
-        <label class="filter-check">
-            <input type="checkbox" name="needs_critique" value="1"
-                   {% if needs_critique %}checked{% endif %}>
+        {# a toggle, so it behaves like the dropdowns: one click, filter applied #}
+        <a class="filter-toggle {% if needs_critique %}is-on{% endif %}"
+           href="{% if needs_critique %}{% query_replace needs_critique='' %}{% else %}{% query_replace needs_critique=1 %}{% endif %}"
+           aria-pressed="{% if needs_critique %}true{% else %}false{% endif %}">
             Needs critique
-        </label>
+        </a>
 
-        <button type="submit">Filter</button>
-        <a class="link-quiet" href="{% url 'browse' %}">Clear</a>
-    </form>
+        {% if selected_medium or selected_tag or needs_critique %}
+            <a class="link-quiet filter-clear" href="{% url 'browse' %}">Clear</a>
+        {% endif %}
+    </div>
 
     <div class="gallery">
         {% for artwork in artworks %}
@@ -57,11 +92,21 @@
                     <a href="{% url 'profile' artwork.user.username %}">{{ artwork.user.username }}</a>
                     · {{ artwork.medium_names|join:", " }}
                 </p>
-                {% if artwork.critique_request.focus_areas %}
-                    <p class="piece-wants">
-                        Wants feedback on {{ artwork.critique_request.focus_areas|join:", " }}
-                    </p>
-                {% endif %}
+                {% comment %}
+                    Tags rather than the requested focus areas, and mediums left
+                    out because the byline above already names them. other_tags
+                    reads the prefetched .tags, so this adds no queries --
+                    .filter(...) here would fire one per artwork.
+                {% endcomment %}
+                {% with other=artwork.other_tags %}
+                    {% if other %}
+                        <ul class="piece-tags">
+                            {% for tag in other %}
+                                <li>{{ tag.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
             </article>
         {% empty %}
             <p class="gallery-empty">No work matches those filters.</p>

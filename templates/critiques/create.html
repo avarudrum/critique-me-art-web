@@ -30,19 +30,38 @@
             {{ formset.management_form }}
             {{ formset.non_form_errors }}
 
-            <p class="meta muted">
-                Respond to any of the areas the artist asked about. Leave the rest blank.
-            </p>
+            {% comment %}
+                Pick the areas first, then write. Five empty boxes on arrival
+                read as five things you are obliged to fill in.
 
-            {% for form in formset %}
-                <fieldset>
-                    <legend>{{ form.category.value|title }}</legend>
-                    {{ form.category }}
-                    <span class="visually-hidden">{{ form.body.label_tag }}</span>
-                    {{ form.body }}
-                    {{ form.body.errors }}
-                </fieldset>
-            {% endfor %}
+                One flat flex row does the reordering: the chips take `order: 1`
+                and flow along the top, each box takes `order: 2` and a full
+                row, so the DOM can keep each checkbox next to the box it opens
+                while the screen shows all the chips first.
+
+                A box reopens itself when it already holds text or carries an
+                error, so a failed submit never hides what someone wrote.
+            {% endcomment %}
+            <div class="area-form">
+                <p class="area-prompt eyebrow">Which areas are you responding to?</p>
+
+                {% for form in formset %}
+                    <input type="checkbox" class="area-toggle visually-hidden"
+                           id="area{{ forloop.counter0 }}"
+                           {% if form.body.value or form.errors %}checked{% endif %}>
+                    <label class="area-chip" for="area{{ forloop.counter0 }}">
+                        {{ form.category.value|title }}
+                    </label>
+
+                    <fieldset class="area-field" id="areafield{{ forloop.counter0 }}">
+                        <legend>{{ form.category.value|title }}</legend>
+                        {{ form.category }}
+                        <span class="visually-hidden">{{ form.body.label_tag }}</span>
+                        {{ form.body }}
+                        {{ form.body.errors }}
+                    </fieldset>
+                {% endfor %}
+            </div>
 
             <div class="actions">
                 <button type="submit">Submit critique</button>

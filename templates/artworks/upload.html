@@ -4,25 +4,27 @@
 
 {% block content %}
     <div class="page-head">
-        <p class="eyebrow">New work</p>
-        <h1>Pin up a piece</h1>
-        <p class="lede">
-            Tick the areas you want looked at, and say what you're stuck on. Those
-            are the only areas anyone will write to.
-        </p>
+        <h1>Upload a new piece.</h1>
     </div>
 
+    {% comment %}
+        The lede sentence has moved down to the fieldset it describes. It was
+        instructions for a control two screens below it, which is why it read as
+        floating loose under the title. The words are unchanged.
+    {% endcomment %}
     <form class="form-shell" method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
         <fieldset>
-            <legend>The work</legend>
             {{ artwork_form.as_p }}
             {% include 'artworks/_medium_suggestions.html' with form=artwork_form %}
         </fieldset>
 
         <fieldset>
-            <legend>What feedback do you want?</legend>
+            <legend>Feedback Specification</legend>
+            <p class="fieldset-note">
+                Select the areas you want feedback on. Outline your process and thoughts.
+            </p>
             {{ request_form.as_p }}
         </fieldset>
 

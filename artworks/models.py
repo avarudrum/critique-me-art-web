@@ -68,6 +68,17 @@ class Artwork(models.Model):
         """
         return [tag.name for tag in self.tags.all() if tag.category == Tag.MEDIUM]
 
+    def other_tags(self):
+        """Every tag except the mediums -- technique and subject.
+
+        The browse tile already names the medium in its byline, so repeating it
+        in the chips below reads as a bug rather than as information.
+
+        Filters in Python for the same reason medium_names() does: it reuses the
+        views' prefetch instead of firing a query per artwork.
+        """
+        return [tag for tag in self.tags.all() if tag.category != Tag.MEDIUM]
+
 
 # A signal rather than code in the delete view, so this also runs when an
 # Artwork is removed through the admin or cascaded from a deleted user.

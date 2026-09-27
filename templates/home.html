@@ -33,60 +33,64 @@
     </dl>
 
     {% if example %}
-        <section class="specimen grid-2">
-            <div>
-                <div class="artwork-plate">
-                    <img src="{{ example.artwork.image.url }}" alt="{{ example.artwork.title }}">
+        <section class="specimen">
+            <h2 class="specimen-heading">Help build a constructive art community.</h2>
+
+            {% comment %}
+                The grid moved inside a wrapper so the heading above can span
+                the whole block instead of becoming a third grid column.
+            {% endcomment %}
+            <div class="specimen-grid grid-2">
+                <div>
+                    <div class="artwork-plate">
+                        <img src="{{ example.artwork.image.url }}" alt="{{ example.artwork.title }}">
+                    </div>
+                    <p class="specimen-caption">
+                        {{ example.artwork.title }} ·
+                        {{ example.artwork.user.username }} ·
+                        {{ example.artwork.medium_names|join:", " }}
+                    </p>
                 </div>
-                <p class="specimen-caption">
-                    {{ example.artwork.title }} ·
-                    {{ example.artwork.user.username }} ·
-                    {{ example.artwork.medium_names|join:", " }}
-                </p>
-            </div>
 
-            <div class="specimen-body">
-                {% if example.artwork.critique_request.focus_areas %}
-                    <p class="eyebrow">The artist asked about</p>
-                    <ul class="focus-list">
-                        {% for area in example.artwork.critique_request.focus_areas %}
-                            <li>{{ area|title }}</li>
+                <div class="specimen-body">
+                    {% comment %}
+                        No .focus-list here. The slideshow tabs below already
+                        name the same areas, so the chips were the same words
+                        twice in a row. The tabs win because they are also the
+                        control -- clicking one is the product idea.
+                    {% endcomment %}
+
+                    {% comment %}
+                        A radio group drives the slideshow, so it needs no
+                        JavaScript. The radios must stay ahead of the track and
+                        nav as siblings: the CSS reaches them with `~`.
+                    {% endcomment %}
+                    <div class="critique-slides">
+                        {% for section in example_sections %}
+                            <input class="slide-toggle visually-hidden" type="radio"
+                                   name="critique-slide" id="cs{{ forloop.counter }}"
+                                   {% if forloop.first %}checked{% endif %}>
                         {% endfor %}
-                    </ul>
-                {% endif %}
 
-                {% comment %}
-                    A radio group drives the slideshow, so it needs no
-                    JavaScript. The radios must stay ahead of the track and nav
-                    as siblings: the CSS reaches them with `~`.
-                {% endcomment %}
-                <div class="critique-slides">
-                    {% for section in example_sections %}
-                        <input class="slide-toggle visually-hidden" type="radio"
-                               name="critique-slide" id="cs{{ forloop.counter }}"
-                               {% if forloop.first %}checked{% endif %}>
-                    {% endfor %}
+                        {% if example_sections|length > 1 %}
+                            <div class="slide-nav">
+                                {% for section in example_sections %}
+                                    <label for="cs{{ forloop.counter }}">
+                                        {{ section.get_category_display }}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
 
-                    {% if example_sections|length > 1 %}
-                        <div class="slide-nav">
+                        <div class="slide-track">
                             {% for section in example_sections %}
-                                <label for="cs{{ forloop.counter }}">
-                                    {{ section.get_category_display }}
-                                </label>
+                                <figure class="slide">
+                                    <blockquote>{{ section.body|truncatewords:50 }}</blockquote>
+                                    {# signed off like a message, not labelled #}
+                                    <figcaption>—{{ example.user.username }}</figcaption>
+                                </figure>
                             {% endfor %}
                         </div>
-                    {% endif %}
-
-                    <div class="slide-track">
-                        {% for section in example_sections %}
-                            <figure class="slide">
-                                <blockquote>{{ section.body|truncatewords:50 }}</blockquote>
-                                <figcaption>
-                                    {{ example.user.username }} on
-                                    {{ section.get_category_display|lower }}
-                                </figcaption>
-                            </figure>
-                        {% endfor %}
                     </div>
                 </div>
             </div>

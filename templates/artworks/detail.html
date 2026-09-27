@@ -62,33 +62,60 @@
     <hr class="divider">
 
     <section>
-        <p class="eyebrow">Critiques</p>
-        <h2>{{ artwork.critiques.count }} response{{ artwork.critiques.count|pluralize }}</h2>
+        {# same section head as the profile: label leads, tally trails it small #}
+        <h2 class="section-head">
+            Critiques
+            <span class="section-count">
+                {{ artwork.critiques.count }} response{{ artwork.critiques.count|pluralize }}
+            </span>
+        </h2>
 
+        {% comment %}
+            Each critique is a <details>, so the list reads as a comment thread
+            you open rather than one long wall. The summary carries who wrote it,
+            when, and which areas they answered, which is enough to choose what
+            to read without opening anything.
+
+            The first is open: a page that shows no critique at all until you
+            click would hide the thing the page exists for.
+
+            The author's profile link lives in the body, not the summary. A link
+            inside a <summary> competes with the toggle for the same click, and
+            per the project notes reading someone's past critiques is how you
+            judge their feedback -- that link is worth keeping reachable.
+        {% endcomment %}
         <div class="critique-list">
             {% for critique in artwork.critiques.all %}
-                <article class="critique">
-                    <div class="critique-head">
-                        <h3 class="critique-author">
-                            <a href="{% url 'profile' critique.user.username %}">{{ critique.user.username }}</a>
-                        </h3>
+                <details class="critique" {% if forloop.first %}open{% endif %}>
+                    <summary class="critique-head">
+                        <span class="critique-author">{{ critique.user.username }}</span>
+                        <span class="critique-areas">
+                            {% for section in critique.sections.all %}
+                                {{ section.get_category_display }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </span>
                         <span class="critique-date">{{ critique.created_at|date:"j M Y" }}</span>
-                    </div>
+                    </summary>
 
-                    {% for section in critique.sections.all %}
-                        <div class="critique-section">
-                            <p class="eyebrow">{{ section.get_category_display }}</p>
-                            <p>{{ section.body|linebreaksbr }}</p>
-                        </div>
-                    {% endfor %}
+                    <div class="critique-body">
+                        {% for section in critique.sections.all %}
+                            <div class="critique-section">
+                                <p class="eyebrow">{{ section.get_category_display }}</p>
+                                <p>{{ section.body|linebreaksbr }}</p>
+                            </div>
+                        {% endfor %}
 
-                    {% if critique.user == user %}
                         <p class="critique-own-actions">
-                            <a href="{% url 'edit_critique' critique.pk %}">Edit</a>
-                            <a href="{% url 'delete_critique' critique.pk %}">Delete</a>
+                            <a href="{% url 'profile' critique.user.username %}">
+                                {{ critique.user.username }}'s profile
+                            </a>
+                            {% if critique.user == user %}
+                                <a href="{% url 'edit_critique' critique.pk %}">Edit</a>
+                                <a href="{% url 'delete_critique' critique.pk %}">Delete</a>
+                            {% endif %}
                         </p>
-                    {% endif %}
-                </article>
+                    </div>
+                </details>
             {% empty %}
                 <p class="gallery-empty">No critiques yet.</p>
             {% endfor %}
