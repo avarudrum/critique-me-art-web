@@ -1793,8 +1793,24 @@ summary.critique-head::-webkit-details-marker {
     margin-bottom: var(--space-3);
 }
 
-summary.critique-head:hover .critique-author {
+/* The name is the profile link and the rest of the header is the toggle, so the
+   hover has to distinguish them: colouring the name from anywhere in the header
+   would advertise the whole row as the link. Only the name's own hover moves. */
+summary.critique-head .critique-author a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 3px;
+}
+
+summary.critique-head .critique-author a:hover {
     color: var(--accent);
+    text-decoration-color: var(--accent);
+}
+
+/* the chevron is the toggle's own affordance, so it answers the header hover */
+summary.critique-head:hover::after {
+    opacity: 0.55;
 }
 
 /* which areas this critic answered -- the reason to open one thread over

@@ -79,16 +79,21 @@
             The first is open: a page that shows no critique at all until you
             click would hide the thing the page exists for.
 
-            The author's profile link lives in the body, not the summary. A link
-            inside a <summary> competes with the toggle for the same click, and
-            per the project notes reading someone's past critiques is how you
-            judge their feedback -- that link is worth keeping reachable.
+            The author's name in the summary is the profile link, and the rest of
+            the header is the toggle. A link inside a <summary> does share the
+            click -- pressing the name both navigates and toggles -- but the
+            navigation wins visibly, so the toggle is never seen. The trade is
+            that the name is no longer a safe place to aim when you only meant to
+            open the thread, which is why it is underlined: it has to look like
+            the link it now is.
         {% endcomment %}
         <div class="critique-list">
             {% for critique in artwork.critiques.all %}
                 <details class="critique" {% if forloop.first %}open{% endif %}>
                     <summary class="critique-head">
-                        <span class="critique-author">{{ critique.user.username }}</span>
+                        <span class="critique-author">
+                            <a href="{% url 'profile' critique.user.username %}">{{ critique.user.username }}</a>
+                        </span>
                         <span class="critique-areas">
                             {% for section in critique.sections.all %}
                                 {{ section.get_category_display }}{% if not forloop.last %}, {% endif %}
@@ -105,15 +110,18 @@
                             </div>
                         {% endfor %}
 
-                        <p class="critique-own-actions">
-                            <a href="{% url 'profile' critique.user.username %}">
-                                {{ critique.user.username }}'s profile
-                            </a>
-                            {% if critique.user == user %}
+                        {% comment %}
+                            Wrapped in the ownership check now that the profile
+                            link has moved up into the summary: without it, every
+                            critique you did not write would end in an empty <p>
+                            still carrying its margin.
+                        {% endcomment %}
+                        {% if critique.user == user %}
+                            <p class="critique-own-actions">
                                 <a href="{% url 'edit_critique' critique.pk %}">Edit</a>
                                 <a href="{% url 'delete_critique' critique.pk %}">Delete</a>
-                            {% endif %}
-                        </p>
+                            </p>
+                        {% endif %}
                     </div>
                 </details>
             {% empty %}

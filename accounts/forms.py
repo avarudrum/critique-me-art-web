@@ -10,6 +10,14 @@ class SignUpForm(NoLabelSuffixMixin, UserCreationForm):
         model = User
         fields = ('username', 'email')
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # UserCreationForm declares password2 with 'Enter the same password as
+        # before, for verification.' Cleared here rather than by redeclaring the
+        # field, which would mean copying Django's widget and validation too.
+        # The label already says Password confirmation.
+        self.fields['password2'].help_text = ''
+
 
 class LoginForm(NoLabelSuffixMixin, AuthenticationForm):
     """Only exists so the login page's labels match every other form.

@@ -179,9 +179,28 @@ adding a user reshuffles who owns the existing pieces.
 - **Critiques on the artwork page are a comment thread.** Each is a `<details>`
   whose summary carries author, areas answered and date — enough to choose what
   to read. The first is `open`, because a page that shows no critique until you
-  click hides the thing the page exists for. The author's profile link sits in
-  the body, not the summary: a link inside a `<summary>` competes with the
-  toggle for the same click.
+  click hides the thing the page exists for.
+- **The author's name in the summary *is* the profile link**, and the rest of the
+  header is the toggle. This reverses an earlier decision that kept the link in
+  the body because a link inside a `<summary>` shares the click. It does share
+  it — pressing the name both navigates and toggles, and CSS cannot
+  `preventDefault` — but the navigation wins visibly, so the toggle is never
+  seen. Verified over CDP: clicking `.critique-areas` or `.critique-date`
+  toggles, clicking the name goes to `/artist/<username>/`, Enter on the focused
+  summary toggles both ways, and Tab from the summary lands on the link. The
+  cost is real and accepted: the name is no longer a safe place to aim when you
+  only meant to open the thread, which is why it is underlined — it has to look
+  like the link it now is. Browser-back from a profile can return the thread in
+  the flipped state.
+- **Only the name's own hover recolours it.** `summary:hover .critique-author`
+  used to turn the name sienna from anywhere in the header; now that the name is
+  the row's only link, that would advertise the whole header as clickable. The
+  header hover fades the chevron instead, the chevron being the toggle's own
+  affordance.
+- **`.critique-own-actions` is inside the ownership check.** The profile link was
+  the only thing keeping that `<p>` non-empty for critiques you did not write, so
+  once it moved into the summary every other critique ended in an empty
+  paragraph still carrying its `margin-bottom`.
 - **Writing a critique starts by choosing areas.** Five empty boxes on arrival
   read as five things you are obliged to fill in, so the chips come first and
   each box appears when its chip is ticked. A box reopens itself when it already
@@ -254,6 +273,34 @@ loudest thing on screen.
   The `appearance: none` chevron rules and the `@supports (appearance:
   base-select)` block below them are dead code kept as the styling contract in
   case a select comes back. Delete them if that stops being likely.
+- **A file input is *not* the `<select>` situation.** Its "Choose File" button is
+  a real element CSS reaches with `::file-selector-button`, supported in every
+  current browser (Chrome 89+, Firefox 82+, Safari 16.4+), so it is styled as a
+  quiet outlined button like `.btn-quiet`. Only two things stay native: the
+  picker *dialog*, which is correct because that is the OS file browser and not
+  part of the page, and the "no file chosen" text, whose colour inherits but
+  whose wording is browser shadow DOM. Replacing that text means hiding the input
+  behind a styled `<label>` — the click works without JavaScript, but nothing can
+  then display the chosen filename, since that needs `input.files[0].name`. Not
+  worth it.
+- **`.page-head h1` is smaller than the global `h1`.** The global clamp tops out
+  at 3.1rem, which is sized for the landing page's one-line statement; every
+  interior page was inheriting a hero size to say "Browse". `.page-head h1` is
+  `clamp(1.8rem, 3.2vw, 2.4rem)` — measured 38.4px at 1280 against the landing
+  page's 68px, which is untouched because that page uses `.lede-block h1`.
+  Exception worth knowing: the artwork detail page's title uses `.artwork-title`,
+  so it is still at the full 3.1rem — deliberate or not, it is now the only
+  interior heading at hero size.
+- **Legends are `--accent`.** The base `legend` rule carries the colour; the
+  critique composer's legends were already sienna, so `.critique-form legend`
+  now only overrides the size. A fieldset name labels the hairline above it
+  rather than being read as prose, which is the short-line condition for accent
+  colour. This is form styling and sits outside the landing page's
+  three-accents ceiling, since that page has no fieldsets.
+- **`.lede-accent` is the opt-in modifier for a lede that is a slogan** rather
+  than a sentence: smaller, italic, accent, the way the landing page sets its
+  tagline. An explanatory paragraph in sienna italic is too much colour, which
+  is why it is not a change to `.lede` itself. Used on `/accounts/settings/`.
 - **An element carrying `.shell` plus a layout class must not use the `padding`
   shorthand.** `<main class="site-main shell">` had `.shell { padding: 0 1.8rem }`
   silently overridden by `.site-main { padding: 2.8rem 0 4.5rem }` — same
@@ -344,6 +391,27 @@ accessible name, which is how the `aria-labelledby` bug below was caught.
 - Templates silently hide `AttributeError`s (e.g. a missing related object renders blank). Views surface them as 500s.
 - Reversing a `RemoveField` re-adds the column using the definition recorded in that migration. A `NOT NULL` column with no default cannot be added back to a table that already has rows — SQLite raises `IntegrityError: NOT NULL constraint failed`. Migration `0002` inserts an `AlterField` giving `medium` a `default=''` *before* the `RemoveField` purely so the migration can be reversed.
 - Django renders form widgets through a **private template engine** that only sees `django/forms/templates` and app-level template dirs — it cannot see the project-level `templates/`. `FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'` in settings routes widget rendering through `TEMPLATES` instead, which is what lets `templates/artworks/widgets/` work. That setting requires `'django.forms'` in `INSTALLED_APPS`, or Django's own built-in widget templates stop resolving.
+- **`as_p` silently injects an empty `<p>` wherever a widget renders a `<div>`.**
+  A `<p>` may only hold phrasing content, so the parser closes it at the `<div>`
+  — and the template's own `</p>` then arrives with no `<p>` open, which the HTML
+  spec says to treat as `<p></p>`, so one is created. Two measured consequences:
+  a zero-height paragraph after the widget, and the label left alone in its own
+  `<p>`, sitting `--space-3` above its widget where every other label — sharing a
+  `<p>` with its input — sits at `--space-1`. That 12px inconsistency on two of
+  six upload fields was invisible to the eye and only showed up in
+  `getBoundingClientRect()`. It hits the tag picker and the focus picker.
+  Patched in CSS with `form p:empty` and `form p:has(> label:only-child)`, plus a
+  `margin-bottom` on `.tag-picker` and `div.focus-picker` — **needed**, because
+  hiding the empty `<p>` removed the 17.6px of separation it had accidentally been
+  providing, collapsing the gap below each widget to zero. The real fix is
+  `as_div` (Django's modern default, valid markup); it touches every form
+  template's CSS, so it is deliberately still a to-do.
+- **Help text Django owns is cleared in `__init__`, not by redeclaring the field.**
+  `SignUpForm` blanks `password2`'s "Enter the same password as before" that way;
+  redeclaring would mean copying Django's widget, `autocomplete="new-password"`
+  and validation too. Setting it to `''` also makes Django drop the field's
+  `aria-describedby`, so no reference to a missing span is left behind — a space
+  would not have.
 - `label_suffix` cannot be set as a class attribute — `BaseForm.__init__` assigns
   `self.label_suffix` unconditionally and would overwrite it. `NoLabelSuffixMixin`
   passes it through `kwargs` instead. `LoginView` builds its own form, so it has
@@ -424,6 +492,12 @@ Since then, roughly in order:
 - `the programmer` seeded as the front-page specimen (`ava.rudrum` /
   `fellow.artist`), with `seed.py` gaining named artist and critic
 - readability pass: filled focus chips, upright artist note, `.section-head`
+- form polish pass: styled file input, interior `h1`s brought down off the hero
+  size, sienna legends, the `as_p` empty-paragraph spacing bug found and patched,
+  upload split into two labelled fieldsets, a round of copy trimmed out of the
+  upload / edit / delete / profile-settings / signup pages
+- the critique author's name moved into the summary as the profile link, and the
+  body link removed
 
 **Still uncommitted at time of writing** — several rounds of the above. Check
 `git status`; new *untracked* paths are easy to miss and the app breaks without
