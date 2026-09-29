@@ -522,14 +522,24 @@ can be switched off. That `.exists()` is one extra query on browse.
 2. ~~Styling.~~ Done — see the Styling section above. Every page is styled and
    static files are set up. `{% block extra_head %}` still exists in `base.html`
    for page-specific additions, but nothing uses it now.
-3. **Deploy** (Railway or Render) with PostgreSQL. Recommended before the README,
-   which needs the live URL and the real setup steps. Already done: `SECRET_KEY`,
-   `DEBUG` and `ALLOWED_HOSTS` from env, and `STATIC_ROOT`. Still needed:
-   `dj-database-url` + `psycopg`, **whitenoise** (with `DEBUG=False` Django stops
-   serving static files entirely, so the site deploys looking completely
-   unstyled — this is the one that catches people), `gunicorn` and a start
-   command, `CSRF_TRUSTED_ORIGINS` for the deployed domain, and the matching
-   `requirements.txt` additions.
+3. **Deploy to Render** — code side done and verified locally under gunicorn with
+   `DEBUG=False`; the Render dashboard setup is what remains. What was added:
+   `dj-database-url` (SQLite unless `DATABASE_URL` is set), `psycopg`,
+   **whitenoise** with `CompressedManifestStaticFilesStorage`, `gunicorn`,
+   `build.sh` (install, collectstatic, migrate), `.python-version`, and
+   `CSRF_TRUSTED_ORIGINS` from env. `RENDER_EXTERNAL_HOSTNAME` is appended to
+   `ALLOWED_HOSTS` and the trusted origins automatically. HTTPS-only cookies and
+   the SSL redirect switch on whenever `DEBUG` is off. HSTS deliberately not set.
+   - **`DEBUG` now defaults to `False`.** Local `.env` must say `DEBUG=True`, or
+     runserver stops serving CSS.
+   - **`cloudinary_storage` must stay below `django.contrib.staticfiles`** in
+     `INSTALLED_APPS`. It ships its own `collectstatic`, the first-listed app
+     wins a command name, and its version reads `settings.STATICFILES_STORAGE`,
+     removed in Django 5.1 — `AttributeError`, failed build. Found by running
+     collectstatic before deploying, not after.
+   - Render's shell is paid-only, so seed or `createsuperuser` against production
+     by running `manage.py` locally with `DATABASE_URL` set to the database's
+     *external* URL. `seed` uploads the images to Cloudinary again.
 4. README explaining the product idea, stack, and local setup.
 
 **Tests are still not in the repo.** Every `tests.py` is empty. A lot of test

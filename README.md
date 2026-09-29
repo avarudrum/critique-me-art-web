@@ -91,7 +91,7 @@ python manage.py runserver        # http://127.0.0.1:8000/
 |-------------------------------------------------|---------------------------------------------------------|
 | `SECRET_KEY`                                    | Any long random string for local use                    |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | From your Cloudinary dashboard |
-| `DEBUG`                                         | Optional, defaults to `True`                            |
+| `DEBUG`                                         | Set to `True` locally. Defaults to `False`, which is what a server should run |
 | `ALLOWED_HOSTS`                                 | Optional, defaults to `127.0.0.1,localhost`             |
 
 ### Sample data
