@@ -130,16 +130,16 @@ CRITIQUE_BODIES = {
     # A '_critic' key names the author instead of drawing one at random. Any
     # other key is a focus area.
 
-    # PLACEHOLDER TEXT -- these five bodies are filler so the sections exist and
-    # this piece wins the landing-page pick. Replace them with the real critique.
+    # The landing-page specimen. The home page shows each section through
+    # truncatewords:50, so keep every body under 50 words or it gets cut off.
     'the programmer': [
         {
             '_critic': 'fellow.artist',
-            'composition': "Placeholder feedback on composition.",
-            'color': "Placeholder feedback on color.",
-            'technique': "Placeholder feedback on technique.",
-            'concept': "Placeholder feedback on concept.",
-            'perspective': "Placeholder feedback on perspective.",
+            'composition': "The figure's gaze carries you straight to the monitor, and the curtain half hides it, so we never see what they see. Good call. The bare wall on the left gives the room air, though the bag in the corner pulls focus. A darker value would sink it back.",
+            'color': "The cool blue-green room leaves the orange of the skin as the only warmth, which is why the figure holds your eye. The screen could do more. It is the dullest light in a room it should be lighting. Let some fall on the face and forearm.",
+            'technique': "The oil pastel over acrylic is strongest on the limbs, where the orange contour lines model the form instead of just outlining it. The face hasn't had the same attention, so from a distance it reads as a dark patch. A few more marks there would pay off.",
+            'concept': "The mood carries. Chin on hand, other hand on the mouse reads as late and absorbed rather than busy. The sketches on the wall are the interesting part: a room covered in drawing, and all the attention has gone to the screen. I'd lean into that.",
+            'perspective': "The room reads from eye level, but the desktop tips toward us more steeply than the floor does, so it sits slightly apart from everything around it. Flattening that plane a little would settle the desk into the room.",
         },
     ],
     'Busking': [

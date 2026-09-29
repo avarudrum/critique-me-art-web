@@ -68,11 +68,14 @@
         </div>
 
         {# a toggle, so it behaves like the dropdowns: one click, filter applied #}
-        <a class="filter-toggle {% if needs_critique %}is-on{% endif %}"
-           href="{% if needs_critique %}{% query_replace needs_critique='' %}{% else %}{% query_replace needs_critique=1 %}{% endif %}"
-           aria-pressed="{% if needs_critique %}true{% else %}false{% endif %}">
-            Needs critique
-        </a>
+        {# hidden when every piece has a critique, but kept while on so it can be switched off #}
+        {% if any_need_critique or needs_critique %}
+            <a class="filter-toggle {% if needs_critique %}is-on{% endif %}"
+               href="{% if needs_critique %}{% query_replace needs_critique='' %}{% else %}{% query_replace needs_critique=1 %}{% endif %}"
+               aria-pressed="{% if needs_critique %}true{% else %}false{% endif %}">
+                Needs critique
+            </a>
+        {% endif %}
 
         {% if selected_medium or selected_tag or needs_critique %}
             <a class="link-quiet filter-clear" href="{% url 'browse' %}">Clear</a>

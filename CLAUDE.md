@@ -504,12 +504,17 @@ Since then, roughly in order:
 them (`static/`, `core/forms.py`, `templates/accounts/`,
 `artworks/templatetags/`, and the migrations).
 
-**The front page is currently showing placeholder critique text.** The seed
-entry for `the programmer` ships five bodies reading "Placeholder feedback on
-composition." and so on. They were seeded before being replaced, and re-running
-`seed` will not fix it — `create_artworks` skips titles that already exist. Edit
-the critique in the UI as `fellow.artist`, or delete the artwork through the
-admin (which fires the Cloudinary cleanup signal) and seed again.
+**The front-page critique is real text now**, in `seed.py` and in the local
+database. Each body must stay under 50 words: `home.html` runs them through
+`truncatewords:50`. Editing `seed.py` alone won't update an existing database,
+because `create_artworks` skips titles that already exist.
+
+**"Needs critique" means "has no critiques"** (`critiques__isnull=True`). It used
+to filter `critique_status='open'`, but nothing ever sets `'closed'`, so it
+matched everything. `Artwork.critique_status` is now unused outside the admin.
+The toggle is hidden when every artwork already has a critique (like the Medium
+dropdown only listing mediums in use), but stays while the filter is on so it
+can be switched off. That `.exists()` is one extra query on browse.
 
 ## Next up
 
@@ -541,7 +546,7 @@ Two things now need testing that did not exist before, and both fail silently:
   unticked chip. The test that matters is posting a tag id that sits inside
   *both* a collapsed category and a collapsed "N more" overflow, and asserting
   it lands on the artwork. Nothing visible breaks if this regresses.
-- **Query counts.** `browse` is 6 (2 of them session/auth), `home` 3, and
+- **Query counts.** `browse` is 7 (2 of them session/auth, 1 the needs-critique `.exists()`), `home` 3, and
   `artwork_detail` 9 and flat — assert it stays flat across 1, 2 and 3
   critiques, since the whole point of the `Prefetch` there is that it does not
   grow. A missing `select_related` costs nothing visible and shows up only

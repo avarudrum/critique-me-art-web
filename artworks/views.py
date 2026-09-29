@@ -61,7 +61,10 @@ def browse(request):
         artworks = artworks.filter(tags__id=int(tag_id))
 
     if needs_critique:
-        artworks = artworks.filter(critique_status='open')
+        # "Needs critique" means nobody has answered it yet. It used to filter on
+        # critique_status='open', but nothing ever sets 'closed', so that
+        # matched every artwork and the toggle did nothing.
+        artworks = artworks.filter(critiques__isnull=True)
 
     # Each join above can repeat a row, so collapse duplicates.
     artworks = artworks.distinct()
@@ -74,6 +77,11 @@ def browse(request):
     )
 
     tags = Tag.objects.exclude(category=Tag.MEDIUM).order_by('category', 'name')
+
+    # Same idea as `mediums`: don't offer a filter that can only come back empty.
+    # Checked across all artworks, not the filtered set, so the toggle doesn't
+    # appear and disappear as the other filters change.
+    any_need_critique = Artwork.objects.filter(critiques__isnull=True).exists()
 
     # The filter dropdowns are custom markup rather than <select>s, so nothing
     # renders the chosen option's label for us -- the closed toggle has to show
@@ -92,6 +100,7 @@ def browse(request):
         'selected_medium_name': selected_medium_name,
         'selected_tag_name': selected_tag_name,
         'needs_critique': needs_critique,
+        'any_need_critique': any_need_critique,
     })
 
 
