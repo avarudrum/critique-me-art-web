@@ -136,6 +136,16 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
 }
 
+# Serve images as https:// URLs. cloudinary_storage sets this too, but only in a
+# module this app never imports, so without this line every image URL came out
+# http:// -- an insecure request on an HTTPS page.
+#
+# Imported here, not at the top: cloudinary reads its credentials from the
+# environment once, on first import, so it must come after load_dotenv() or it
+# starts with no cloud name and every image URL fails to build.
+import cloudinary  # noqa: E402
+cloudinary.config(secure=True)
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

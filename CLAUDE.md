@@ -382,6 +382,12 @@ accessible name, which is how the `aria-labelledby` bug below was caught.
   via `--dump-dom`, don't eyeball narrow screenshots.
 
 - `CloudinaryField` doesn't accept a Django `File` outside a form. In scripts, upload with `cloudinary.uploader.upload(path)` and assign `result['public_id']`.
+- **Image URLs were `http://`.** `cloudinary_storage` sets `secure=True` only in its
+  `app_settings` module, which this app never imports. `settings.py` now calls
+  `cloudinary.config(secure=True)` itself, and imports `cloudinary` *below*
+  `load_dotenv()`: the package reads its credentials from the environment once, on
+  first import, so importing it at the top gave it no cloud name and every
+  `image.url` raised `ValueError: Must supply cloud_name`.
 - Cloudinary free plan rejects images over 10 MB.
 - Seed image filenames must match exactly, including extension case (`.JPG` vs `.jpg`). macOS ignores case, Linux servers won't.
 - `--flush` clears the database but not Cloudinary; old uploads must be deleted from the Media Library manually. `manage.py flush` does not fire `post_delete`, so the `Artwork` cleanup signal does not help here — only real deletes.
