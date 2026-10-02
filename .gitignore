@@ -5,7 +5,7 @@ db.sqlite3
 .env
 .DS_Store
 seed_images/
-CLAUDE.MD
+CLAUDE.md
 ~/seed.py
 # collectstatic output (generated at deploy time)
 staticfiles/

@@ -5,7 +5,19 @@
 Most places to share art give you one comment box, and you get back "nice!" or advice
 on things you never asked about. On Atelier, artists choose which areas they want
 feedback on when they upload a piece: **composition, color, technique, concept or
-perspective**. Critics reply only to those areas, in their own words, one section per area.
+perspective**. Critics reply only to those areas, in their own words.
+
+## Try it
+
+**Live site:** <https://YOUR-APP.herokuapp.com/>
+
+Browsing needs an account. To look around without signing up, log in with the demo account:
+
+| Username | Password      |
+|----------|---------------|
+| `demo`   | `demopass123` |
+
+It's a shared account, so anything you post with it is visible to the next visitor.
 
 ## How it works
 
@@ -53,9 +65,10 @@ perspective**. Critics reply only to those areas, in their own words, one sectio
 | Layer    | Choice                                                       |
 |----------|--------------------------------------------------------------|
 | Backend  | Django 5.2, Python 3.11                                      |
-| Database | SQLite locally (PostgreSQL planned for deployment)           |
+| Database | SQLite locally, PostgreSQL in production                     |
 | Images   | Cloudinary                                                   |
 | Frontend | Django templates, one hand-written stylesheet, no build step |
+| Hosting  | Heroku (gunicorn, WhiteNoise for static files)               |
 
 ## Project layout
 
@@ -80,7 +93,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-cp config/.env.example .env       # then fill in the values below
+cp .env.example .env              # then fill in the values below
 python manage.py migrate
 python manage.py runserver        # http://127.0.0.1:8000/
 ```
@@ -101,15 +114,31 @@ python manage.py seed             # add sample users, artworks and critiques
 python manage.py seed --flush     # wipe the sample data and reseed
 ```
 
-Seeded accounts all use the password `seedpass123` (for example `gracie_m`, `haley_s`).
+On your local copy, seeded accounts all use the password `seedpass123` (for example
+`gracie_m`, `haley_s`). These passwords don't work on the live site; use the demo account there.
 
 The seed images live in `seed_images/`, which is not checked into the repo. Without
 that folder, `seed` stops with an error and creates nothing. Create an empty
 `seed_images/` folder to get just the users, then upload your own work through the site.
 
+## Deployment
+
+The live site runs on Heroku with Heroku Postgres. Heroku deploys from this repo: the
+`Procfile` starts gunicorn and runs migrations before each release, and the Python
+buildpack runs `collectstatic` for WhiteNoise to serve. The settings are the same
+`.env` variables as above, set as Heroku config vars, plus:
+
+| Variable               | Notes                                                        |
+|------------------------|--------------------------------------------------------------|
+| `DATABASE_URL`         | Set automatically by the Heroku Postgres add-on              |
+| `ALLOWED_HOSTS`        | The app's domain, e.g. `your-app.herokuapp.com`             |
+| `CSRF_TRUSTED_ORIGINS` | The same domain with `https://` in front                     |
+
+`DEBUG` stays unset in production. When it's off, Django redirects to HTTPS and marks
+cookies secure-only.
+
 ## Roadmap
 
-- Deploy to Railway or Render with PostgreSQL
 - Automated test suite
 - HTMX for things plain HTML can't do well, such as keeping the chosen image after a
   validation error
